@@ -18,6 +18,7 @@ import WorksListPage from './features/works/WorksListPage';
 import WorkDetailPage from './features/works/WorkDetailPage';
 import SettingsPage from './features/settings/SettingsPage';
 import BudgetsListPage from './features/budget/BudgetsListPage';
+import FullProjectPage from './features/budget/FullProjectPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useSettingsStore((s) => s.user);
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/new" element={<ProtectedRoute><NewBudgetPage /></ProtectedRoute>} />
+          <Route path="/budget/new/full" element={<ProtectedRoute><FullProjectPage /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
           <Route path="/services/:category" element={<ProtectedRoute><ServicePage /></ProtectedRoute>} />
           <Route path="/budget/:budgetId/step/:step" element={<ProtectedRoute><BudgetStepPage /></ProtectedRoute>} />
