@@ -10,7 +10,7 @@ import { useState } from 'react';
 
 export default function ResultPage() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { budgetId: id } = useParams<{ budgetId: string }>();
   const budgets = useBudgetStore((s) => s.budgets);
   const updateBudget = useBudgetStore((s) => s.updateBudget);
   const [simPrice, setSimPrice] = useState<number | null>(null);

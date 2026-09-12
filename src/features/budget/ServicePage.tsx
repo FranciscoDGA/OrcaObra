@@ -8,7 +8,7 @@ import type { Budget } from '../../lib/types';
 
 export default function ServicePage() {
   const navigate = useNavigate();
-  const { categoryName } = useParams<{ categoryName: string }>();
+  const { category: categoryName } = useParams<{ category: string }>();
   const addBudget = useBudgetStore((s) => s.addBudget);
 
   const services = servicesForCategory(categoryName ?? '');

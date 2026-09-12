@@ -11,7 +11,7 @@ import Button from '../../components/ui/Button';
 
 export default function BudgetStepPage() {
   const navigate = useNavigate();
-  const { id, step: stepParam } = useParams<{ id: string; step: string }>();
+  const { budgetId: id, step: stepParam } = useParams<{ budgetId: string; step: string }>();
   const step = Number(stepParam) || 1;
 
   const budgets = useBudgetStore((s) => s.budgets);
