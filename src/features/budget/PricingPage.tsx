@@ -18,9 +18,7 @@ export default function PricingPage() {
   const settings = useSettingsStore((s) => s.settings);
 
   const found = budgets.find((b) => b.id === id);
-  const svc = found ? findService(found.serviceType) : undefined;
-
-  if (!found || !svc) {
+  if (!found) {
     return (
       <div className="pb-6">
         <PageHeader title="Orçamento não encontrado" backTo="/" />
@@ -29,10 +27,20 @@ export default function PricingPage() {
     );
   }
 
-  const budget = found;
-  const service = svc;
+  const isFullProject = found.projectMode === 'full';
+  const svc = isFullProject ? null : findService(found.serviceType);
 
-  const totalSteps = service.steps.length;
+  if (!isFullProject && !svc) {
+    return (
+      <div className="pb-6">
+        <PageHeader title="Serviço não encontrado" backTo="/" />
+        <p className="text-slate-500 text-center mt-8">Tipo de serviço "{found.serviceType}" não encontrado no catálogo.</p>
+      </div>
+    );
+  }
+
+  const budget = found;
+  const totalSteps = isFullProject ? 1 : (svc?.steps?.length ?? 1);
   const quantity =
     budget.quantities.quantity1 ??
     budget.measurements.floorArea ??
@@ -127,11 +135,15 @@ export default function PricingPage() {
     navigate(`/budget/${id}/result`);
   }
 
+  const backTo = isFullProject
+    ? `/budget/new/full`
+    : `/budget/${id}/step/${totalSteps}`;
+
   return (
     <div className="pb-6">
       <PageHeader
         title="Custos e prazo"
-        backTo={`/budget/${id}/step/${totalSteps}`}
+        backTo={backTo}
         subtitle="Defina os parâmetros de precificação"
       />
 
@@ -284,7 +296,7 @@ export default function PricingPage() {
       </div>
 
       <div className="flex gap-3 mt-6">
-        <Button variant="outline" fullWidth onClick={() => navigate(`/budget/${id}/step/${totalSteps}`)}>
+        <Button variant="outline" fullWidth onClick={() => navigate(backTo)}>
           <ArrowLeft size={18} className="mr-2 inline" />
           Voltar
         </Button>

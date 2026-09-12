@@ -115,7 +115,7 @@ export default function DashboardPage() {
               <Card
                 key={b.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/budget/${b.id}`)}
+                onClick={() => navigate(b.totalCost && b.totalCost > 0 ? `/budget/${b.id}/result` : `/budget/${b.id}/pricing`)}
               >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">

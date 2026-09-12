@@ -5,11 +5,34 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
-import { FileText } from 'lucide-react';
+import { FileText, Pencil, Trash2 } from 'lucide-react';
 
 export default function BudgetsListPage() {
   const budgets = useBudgetStore((s) => s.budgets);
+  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
   const navigate = useNavigate();
+
+  function getBudgetRoute(b: typeof budgets[0]) {
+    if (b.totalCost && b.totalCost > 0) {
+      return `/budget/${b.id}/result`;
+    }
+    if (b.projectMode === 'full') {
+      return `/budget/${b.id}/pricing`;
+    }
+    return `/budget/${b.id}/pricing`;
+  }
+
+  function handleDelete(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    if (window.confirm('Excluir este orçamento?')) {
+      deleteBudget(id);
+    }
+  }
+
+  function handleEdit(e: React.MouseEvent, b: typeof budgets[0]) {
+    e.stopPropagation();
+    navigate(getBudgetRoute(b));
+  }
 
   return (
     <div>
@@ -25,12 +48,14 @@ export default function BudgetsListPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {budgets.map((b) => (
-            <button
+            <div
               key={b.id}
-              onClick={() => navigate(`/budget/${b.id}/result`)}
-              className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 text-left hover:border-teal-300 transition-colors shadow-sm"
+              className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3 shadow-sm"
             >
-              <div className="min-w-0">
+              <button
+                className="flex-1 min-w-0 text-left"
+                onClick={() => navigate(getBudgetRoute(b))}
+              >
                 <h3 className="font-bold text-slate-900 text-sm truncate">
                   {b.projectName || b.serviceType || 'Orçamento'}
                 </h3>
@@ -38,9 +63,23 @@ export default function BudgetsListPage() {
                   {b.serviceType} • {formatDate(b.updatedAt || b.createdAt)}
                   {b.finalPrice ? ` • ${formatMoney(b.finalPrice)}` : ''}
                 </p>
-              </div>
+              </button>
               <StatusBadge status={b.status} />
-            </button>
+              <button
+                onClick={(e) => handleEdit(e, b)}
+                className="p-2 rounded-lg hover:bg-teal-50 text-teal-600 transition-colors"
+                title="Editar"
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, b.id)}
+                className="p-2 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
+                title="Excluir"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           ))}
         </div>
       )}
