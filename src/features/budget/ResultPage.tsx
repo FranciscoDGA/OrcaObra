@@ -43,67 +43,10 @@ export default function ResultPage() {
   function handleApprove() {
     const now = new Date().toISOString();
     updateBudget({
-      id: budget.id,
-      clientId: budget.clientId,
-      serviceType: budget.serviceType,
-      serviceCategory: budget.serviceCategory,
-      description: budget.description,
-      projectName: budget.projectName,
-      projectDescription: budget.projectDescription,
-      siteAddress: budget.siteAddress,
-      city: budget.city,
-      measurements: budget.measurements,
-      quantities: budget.quantities,
-      options: budget.options,
-      calculated: budget.calculated,
-      estimatedDays: budget.estimatedDays,
-      daysCalculationMode: budget.daysCalculationMode,
-      productivityPerDay: budget.productivityPerDay,
-      teamDailyCost: budget.teamDailyCost,
-      laborCost: budget.laborCost,
-      workerCost: budget.workerCost,
-      helperCost: budget.helperCost,
-      workerDailyRate: budget.workerDailyRate,
-      helperDailyRate: budget.helperDailyRate,
-      numberOfHelpers: budget.numberOfHelpers,
-      transportCost: budget.transportCost,
-      foodCost: budget.foodCost,
-      fuelCost: budget.fuelCost,
-      toolCost: budget.toolCost,
-      otherCost: budget.otherCost,
-      expenseCost: budget.expenseCost,
-      riskReservePercent: budget.riskReservePercent,
-      riskReserve: budget.riskReserve,
-      materialCost: budget.materialCost,
-      materialSellingPrice: budget.materialSellingPrice,
-      totalCost: budget.totalCost,
-      minimumMargin: budget.minimumMargin,
-      recommendedMargin: budget.recommendedMargin,
-      fullMargin: budget.fullMargin,
-      minimumPrice: budget.minimumPrice,
-      recommendedPrice: budget.recommendedPrice,
-      fullPrice: budget.fullPrice,
-      effectiveUnitPrice: budget.effectiveUnitPrice,
-      pricingVersion: budget.pricingVersion,
-      selectedPriceType: budget.selectedPriceType,
-      customPrice: budget.customPrice,
-      discount: budget.discount,
-      finalPrice: budget.finalPrice,
-      paymentMethod: budget.paymentMethod,
-      paymentTerms: budget.paymentTerms,
-      includedServices: budget.includedServices,
-      excludedServices: budget.excludedServices,
-      agreedDays: budget.agreedDays,
-      validityDays: budget.validityDays,
-      expiresAt: budget.expiresAt,
+      ...budget,
       approvalStatus: 'Aprovado',
       approvedAt: now,
-      rejectedAt: budget.rejectedAt,
       status: 'Aprovado',
-      projectMode: budget.projectMode,
-      stages: budget.stages,
-      materials: budget.materials,
-      createdAt: budget.createdAt,
       updatedAt: now,
     });
   }
@@ -221,7 +164,7 @@ export default function ResultPage() {
         </Button>
 
         {isApproved && (
-          <Button fullWidth variant="primary" onClick={() => navigate(`/works/${id}`)}>
+          <Button fullWidth variant="primary" onClick={() => navigate(`/work/${id}`)}>
             <Hammer size={18} className="mr-2 inline" />
             Iniciar obra
           </Button>

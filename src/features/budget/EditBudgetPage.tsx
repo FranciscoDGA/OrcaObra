@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, Trash2 } from 'lucide-react';
+import { Save, Trash2, User } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
+import { useClientStore } from '../../store/useClientStore';
 import { calculateForService } from '../../lib/geometry';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
@@ -9,6 +10,7 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
+import ClientPickerModal from '../../components/ui/ClientPickerModal';
 
 const PROJECT_TYPES = ['Casa', 'Edícula', 'Reforma', 'Ampliação', 'Comércio', 'Outro'];
 
@@ -32,6 +34,10 @@ export default function EditBudgetPage() {
 
   const found = budgets.find((b) => b.id === id);
 
+  const { clients, loadClients } = useClientStore();
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [showClientPicker, setShowClientPicker] = useState(false);
+
   const [name, setName] = useState('');
   const [projectType, setProjectType] = useState('Casa');
   const [width, setWidth] = useState('');
@@ -44,7 +50,12 @@ export default function EditBudgetPage() {
   const [city, setCity] = useState('');
 
   useEffect(() => {
+    loadClients();
+  }, [loadClients]);
+
+  useEffect(() => {
     if (found) {
+      setClientId(found.clientId || null);
       setName(found.projectName || '');
       setProjectName(found.projectName || '');
       setSiteAddress(found.siteAddress || '');
@@ -112,6 +123,7 @@ export default function EditBudgetPage() {
 
     updateBudget({
       ...found,
+      clientId,
       projectName: projectName || name,
       projectDescription: `${projectType} — ${w}m × ${l}m × ${h}m`,
       siteAddress,
@@ -137,11 +149,44 @@ export default function EditBudgetPage() {
     navigate(`/budget/${id}/pricing`);
   }
 
+  const selectedClient = clients.find((c) => c.id === clientId);
+
   return (
     <div className="pb-6">
       <PageHeader title="Editar orçamento" backTo="/" subtitle={found?.projectName || found?.serviceType || ''} />
 
       <div className="space-y-4 mt-2">
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-teal-600" />
+              <h2 className="text-sm font-bold text-slate-800">Cliente</h2>
+            </div>
+            <button
+              onClick={() => setShowClientPicker(true)}
+              className="text-sm text-teal-600 font-semibold hover:text-teal-700"
+            >
+              {selectedClient ? 'Trocar' : 'Selecionar'}
+            </button>
+          </div>
+          {selectedClient ? (
+            <div className="bg-slate-50 rounded-xl p-3 mb-3">
+              <p className="font-semibold text-slate-800">{selectedClient.name}</p>
+              <div className="flex gap-3 text-sm text-slate-500 mt-0.5">
+                {selectedClient.phone && <span>{selectedClient.phone}</span>}
+                {selectedClient.city && <span>{selectedClient.city}</span>}
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowClientPicker(true)}
+              className="w-full p-3 rounded-xl border border-dashed border-slate-300 text-slate-500 hover:border-teal-300 hover:text-teal-600 transition-colors text-sm mb-3"
+            >
+              Toque para selecionar um cliente
+            </button>
+          )}
+        </Card>
+
         <Card>
           <div className="space-y-3">
             <Input
@@ -256,6 +301,13 @@ export default function EditBudgetPage() {
           </Button>
         </div>
       </div>
+
+      <ClientPickerModal
+        isOpen={showClientPicker}
+        onClose={() => setShowClientPicker(false)}
+        onSelect={setClientId}
+        selectedClientId={clientId}
+      />
     </div>
   );
 }

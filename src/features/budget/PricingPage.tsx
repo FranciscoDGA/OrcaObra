@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Calculator } from 'lucide-react';
+import { ArrowLeft, Calculator, Info } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { findService } from '../../data/services';
+import { REGIONS } from '../../data/regions';
 import { calculatePricing, estimateDays } from '../../lib/pricing';
 import PageHeader from '../../components/layout/PageHeader';
 import Input from '../../components/ui/Input';

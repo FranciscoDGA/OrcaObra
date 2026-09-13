@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Client } from '../lib/types';
 import { repository } from '../lib/repository';
 
@@ -11,38 +10,30 @@ interface ClientState {
   deleteClient: (id: string) => void;
 }
 
-export const useClientStore = create<ClientState>()(
-  persist(
-    (set) => ({
-      clients: [],
+export const useClientStore = create<ClientState>()((set) => ({
+  clients: repository.getClients(),
 
-      loadClients: () => {
-        const clients = repository.getClients();
-        set({ clients });
-      },
+  loadClients: () => {
+    set({ clients: repository.getClients() });
+  },
 
-      addClient: (data: { name: string; phone?: string; city?: string }) => {
-        const client = repository.addClient(data);
-        set((state) => ({ clients: [...state.clients, client] }));
-        return client;
-      },
+  addClient: (data: { name: string; phone?: string; city?: string }) => {
+    const client = repository.addClient(data);
+    set((state) => ({ clients: [...state.clients, client] }));
+    return client;
+  },
 
-      updateClient: (client: Client) => {
-        repository.updateClient(client);
-        set((state) => ({
-          clients: state.clients.map((c) => (c.id === client.id ? client : c)),
-        }));
-      },
+  updateClient: (client: Client) => {
+    repository.updateClient(client);
+    set((state) => ({
+      clients: state.clients.map((c) => (c.id === client.id ? client : c)),
+    }));
+  },
 
-      deleteClient: (id: string) => {
-        repository.deleteClient(id);
-        set((state) => ({
-          clients: state.clients.filter((c) => c.id !== id),
-        }));
-      },
-    }),
-    {
-      name: 'orcaobra-clients',
-    }
-  )
-);
+  deleteClient: (id: string) => {
+    repository.deleteClient(id);
+    set((state) => ({
+      clients: state.clients.filter((c) => c.id !== id),
+    }));
+  },
+}));
