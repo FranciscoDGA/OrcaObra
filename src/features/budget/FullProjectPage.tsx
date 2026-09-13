@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Wrench } from 'lucide-react';
+import { Building2, Plus, Trash2, ChevronDown, ChevronUp, Wrench } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { generateId } from '../../lib/id';
 import { calculateForService } from '../../lib/geometry';
-import { estimateDays } from '../../lib/pricing';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -214,8 +213,6 @@ export default function FullProjectPage() {
         fullPrice: 0,
       };
     });
-
-    const extraLabor = selectedExtras.reduce((sum, svc) => sum + 500, 0);
 
     const budget: Budget = {
       ...emptyFullBudget(),

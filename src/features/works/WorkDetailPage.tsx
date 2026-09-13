@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   DollarSign, TrendingUp, Percent, Save, Plus, Trash2,
-  CreditCard, Receipt, FileText, Calendar, ArrowLeft,
 } from 'lucide-react';
 import { useExecutionStore } from '../../store/useExecutionStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
@@ -128,7 +127,7 @@ export default function WorkDetailPage() {
       id: generateId(),
       date: new Date().toISOString(),
       amount: Number(payAmount) || 0,
-      description: payDesc.trim() || PAYMENT_CATEGORIES.find((c) => c.value === payCategory)?.label || '',
+      description: payDesc.trim() || PAYMENT_CATEGORIES.find((c) => c.value === payCategory)?.label || payCategory,
     };
     saveExecution(recalcExecution({ ...execution, payments: [...execution.payments, payment] }));
     setPayAmount('');
@@ -327,6 +326,11 @@ export default function WorkDetailPage() {
                   placeholder="Valor (R$)"
                   value={payAmount}
                   onChange={(e) => setPayAmount(e.target.value)}
+                />
+                <Select
+                  value={payCategory}
+                  onChange={(e) => setPayCategory(e.target.value)}
+                  options={PAYMENT_CATEGORIES}
                 />
                 <Input
                   placeholder="Descrição"
