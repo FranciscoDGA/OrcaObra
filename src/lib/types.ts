@@ -15,6 +15,8 @@ export interface Settings {
   defaultWastePercent: number;
   defaultRiskReservePercent: number;
   currency: string;
+  region: string;
+  city: string;
 }
 
 export interface CalculatedGeometry {

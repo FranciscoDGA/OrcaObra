@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, CheckCircle, TrendingUp, Hammer } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle, TrendingUp, Hammer, Pencil } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../../lib/money';
 import PageHeader from '../../components/layout/PageHeader';
@@ -198,6 +198,11 @@ export default function ResultPage() {
       )}
 
       <div className="space-y-3">
+        <Button fullWidth variant="outline" onClick={() => navigate(`/budget/${id}/edit`)}>
+          <Pencil size={18} className="mr-2 inline" />
+          Editar orçamento
+        </Button>
+
         <Button fullWidth onClick={() => navigate(`/budget/${id}/proposal`)}>
           <FileText size={18} className="mr-2 inline" />
           Gerar proposta

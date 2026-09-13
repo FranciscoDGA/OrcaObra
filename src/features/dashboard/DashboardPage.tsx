@@ -7,6 +7,8 @@ import {
   ChevronRight,
   FileText,
   Hammer,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -18,6 +20,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 export default function DashboardPage() {
   const navigate = useNavigate();
   const budgets = useBudgetStore((s) => s.budgets);
+  const deleteBudget = useBudgetStore((s) => s.deleteBudget);
   const user = useSettingsStore((s) => s.user);
 
   const recentBudgets = [...budgets]
@@ -25,6 +28,13 @@ export default function DashboardPage() {
     .slice(0, 3);
 
   const displayName = user?.name?.split(' ')[0] ?? 'Profissional';
+
+  function handleDelete(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    if (window.confirm('Excluir este orçamento?')) {
+      deleteBudget(id);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -92,7 +102,7 @@ export default function DashboardPage() {
           <h2 className="text-base font-bold text-slate-800">Meus orçamentos</h2>
           {budgets.length > 0 && (
             <button
-              onClick={() => navigate('/budgets')}
+              onClick={() => navigate('/orcamentos')}
               className="text-sm font-semibold text-teal-600 hover:text-teal-700"
             >
               Ver todos
@@ -112,32 +122,49 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-2">
             {recentBudgets.map((b) => (
-              <Card
+              <div
                 key={b.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(b.totalCost && b.totalCost > 0 ? `/budget/${b.id}/result` : `/budget/${b.id}/pricing`)}
+                className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3 shadow-sm"
               >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-bold text-slate-800 truncate">
-                      {b.projectName || b.serviceType}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                      <span>{b.serviceType}</span>
-                      <span>·</span>
-                      <span>{formatDate(b.createdAt)}</span>
-                    </div>
+                <button
+                  className="flex-1 min-w-0 text-left"
+                  onClick={() => navigate(`/budget/${b.id}/edit`)}
+                >
+                  <h3 className="text-sm font-bold text-slate-800 truncate">
+                    {b.projectName || b.serviceType}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                    <span>{b.serviceType}</span>
+                    <span>·</span>
+                    <span>{formatDate(b.createdAt)}</span>
                   </div>
-                  <div className="flex flex-col items-end gap-1 ml-3">
-                    {b.finalPrice != null && (
-                      <span className="text-sm font-bold text-slate-800">
-                        {formatMoney(b.finalPrice)}
-                      </span>
-                    )}
-                    <StatusBadge status={b.status} />
-                  </div>
+                </button>
+                <div className="flex flex-col items-end gap-1 ml-2">
+                  {b.finalPrice != null && (
+                    <span className="text-sm font-bold text-slate-800">
+                      {formatMoney(b.finalPrice)}
+                    </span>
+                  )}
+                  <StatusBadge status={b.status} />
                 </div>
-              </Card>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/budget/${b.id}/edit`);
+                  }}
+                  className="p-2 rounded-lg hover:bg-teal-50 text-teal-600 transition-colors"
+                  title="Editar"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(e, b.id)}
+                  className="p-2 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
+                  title="Excluir"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             ))}
           </div>
         )}

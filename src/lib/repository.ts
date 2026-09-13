@@ -81,7 +81,7 @@ function normalizeBudget(budget: Budget): Budget {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  workerDailyRate: 250,
+  workerDailyRate: 280,
   helperDailyRate: 150,
   defaultHelpers: 1,
   minimumMargin: 10,
@@ -90,6 +90,8 @@ const DEFAULT_SETTINGS: Settings = {
   defaultWastePercent: 10,
   defaultRiskReservePercent: 5,
   currency: 'R$',
+  region: '',
+  city: '',
 };
 
 export const repository = {

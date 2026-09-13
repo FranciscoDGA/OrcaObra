@@ -19,7 +19,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       user: null,
       settings: {
-        workerDailyRate: 250,
+        workerDailyRate: 280,
         helperDailyRate: 150,
         defaultHelpers: 1,
         minimumMargin: 10,
@@ -28,6 +28,8 @@ export const useSettingsStore = create<SettingsState>()(
         defaultWastePercent: 10,
         defaultRiskReservePercent: 5,
         currency: 'R$',
+        region: '',
+        city: '',
       },
       onboardingComplete: false,
 

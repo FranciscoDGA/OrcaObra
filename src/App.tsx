@@ -19,6 +19,7 @@ import WorkDetailPage from './features/works/WorkDetailPage';
 import SettingsPage from './features/settings/SettingsPage';
 import BudgetsListPage from './features/budget/BudgetsListPage';
 import FullProjectPage from './features/budget/FullProjectPage';
+import EditBudgetPage from './features/budget/EditBudgetPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useSettingsStore((s) => s.user);
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/budget/:budgetId/pricing" element={<ProtectedRoute><PricingPage /></ProtectedRoute>} />
           <Route path="/budget/:budgetId/result" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
           <Route path="/budget/:budgetId/proposal" element={<ProtectedRoute><ProposalPage /></ProtectedRoute>} />
+          <Route path="/budget/:budgetId/edit" element={<ProtectedRoute><EditBudgetPage /></ProtectedRoute>} />
           <Route path="/quick" element={<ProtectedRoute><QuickBudgetPage /></ProtectedRoute>} />
           <Route path="/orcamentos" element={<ProtectedRoute><BudgetsListPage /></ProtectedRoute>} />
           <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />

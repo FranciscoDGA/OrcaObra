@@ -12,26 +12,11 @@ export default function BudgetsListPage() {
   const deleteBudget = useBudgetStore((s) => s.deleteBudget);
   const navigate = useNavigate();
 
-  function getBudgetRoute(b: typeof budgets[0]) {
-    if (b.totalCost && b.totalCost > 0) {
-      return `/budget/${b.id}/result`;
-    }
-    if (b.projectMode === 'full') {
-      return `/budget/${b.id}/pricing`;
-    }
-    return `/budget/${b.id}/pricing`;
-  }
-
   function handleDelete(e: React.MouseEvent, id: string) {
     e.stopPropagation();
     if (window.confirm('Excluir este orçamento?')) {
       deleteBudget(id);
     }
-  }
-
-  function handleEdit(e: React.MouseEvent, b: typeof budgets[0]) {
-    e.stopPropagation();
-    navigate(getBudgetRoute(b));
   }
 
   return (
@@ -54,7 +39,7 @@ export default function BudgetsListPage() {
             >
               <button
                 className="flex-1 min-w-0 text-left"
-                onClick={() => navigate(getBudgetRoute(b))}
+                onClick={() => navigate(`/budget/${b.id}/edit`)}
               >
                 <h3 className="font-bold text-slate-900 text-sm truncate">
                   {b.projectName || b.serviceType || 'Orçamento'}
@@ -66,7 +51,7 @@ export default function BudgetsListPage() {
               </button>
               <StatusBadge status={b.status} />
               <button
-                onClick={(e) => handleEdit(e, b)}
+                onClick={() => navigate(`/budget/${b.id}/edit`)}
                 className="p-2 rounded-lg hover:bg-teal-50 text-teal-600 transition-colors"
                 title="Editar"
               >
