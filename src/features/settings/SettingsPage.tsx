@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const [defaultHelpers, setDefaultHelpers] = useState('1');
   const [minimumMargin, setMinimumMargin] = useState('10');
   const [recommendedMargin, setRecommendedMargin] = useState('20');
-  const [fullMargin, setFullMargin] = useState('35');
+  const [fullMargin, setFullMargin] = useState('30');
   const [defaultWastePercent, setDefaultWastePercent] = useState('10');
   const [defaultRiskReservePercent, setDefaultRiskReservePercent] = useState('5');
   const [saved, setSaved] = useState(false);
@@ -76,7 +76,7 @@ export default function SettingsPage() {
       defaultHelpers: Number(defaultHelpers) || 1,
       minimumMargin: Number(minimumMargin) || 10,
       recommendedMargin: Number(recommendedMargin) || 20,
-      fullMargin: Number(fullMargin) || 35,
+      fullMargin: Number(fullMargin) || 30,
       defaultWastePercent: Number(defaultWastePercent) || 10,
       defaultRiskReservePercent: Number(defaultRiskReservePercent) || 5,
     });

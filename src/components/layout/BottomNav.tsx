@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, FileText, Hammer, Settings } from 'lucide-react';
+import { Home, FileText, Users, Settings } from 'lucide-react';
 
 interface NavItem {
   to: string;
@@ -11,7 +11,7 @@ interface NavItem {
 const items: NavItem[] = [
   { to: '/', label: 'Início', icon: Home },
   { to: '/orcamentos', label: 'Orçamentos', icon: FileText },
-  { to: '/obras', label: 'Obras', icon: Hammer },
+  { to: '/clients', label: 'Clientes', icon: Users },
   { to: '/config', label: 'Config', icon: Settings },
 ];
 

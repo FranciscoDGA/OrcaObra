@@ -1,8 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Material } from '../lib/types';
-import { read, write } from '../lib/storage';
-import { generateId } from '../lib/id';
+import { repository } from '../lib/repository';
 
 interface MaterialState {
   materials: Material[];
@@ -12,50 +10,30 @@ interface MaterialState {
   deleteMaterial: (id: string) => void;
 }
 
-export const useMaterialStore = create<MaterialState>()(
-  persist(
-    (set) => ({
-      materials: [],
+export const useMaterialStore = create<MaterialState>()((set) => ({
+  materials: repository.getMaterials(),
 
-      loadMaterials: () => {
-        const materials = read<Material[]>('materials', []);
-        set({ materials });
-      },
+  loadMaterials: () => {
+    set({ materials: repository.getMaterials() });
+  },
 
-      addMaterial: (data: Omit<Material, 'id' | 'lastUpdated'>) => {
-        const now = new Date().toISOString();
-        const material: Material = {
-          ...data,
-          id: generateId(),
-          lastUpdated: now,
-        };
-        const materials = read<Material[]>('materials', []);
-        materials.push(material);
-        write('materials', materials);
-        set({ materials });
-        return material;
-      },
+  addMaterial: (data: Omit<Material, 'id' | 'lastUpdated'>) => {
+    const material = repository.addMaterial(data);
+    set((state) => ({ materials: [...state.materials, material] }));
+    return material;
+  },
 
-      updateMaterial: (material: Material) => {
-        const materials = read<Material[]>('materials', []);
-        const index = materials.findIndex((m) => m.id === material.id);
-        if (index === -1) return;
-        const updated = { ...material, lastUpdated: new Date().toISOString() };
-        materials[index] = updated;
-        write('materials', materials);
-        set({ materials });
-      },
+  updateMaterial: (material: Material) => {
+    repository.updateMaterial(material);
+    set((state) => ({
+      materials: state.materials.map((m) => (m.id === material.id ? material : m)),
+    }));
+  },
 
-      deleteMaterial: (id: string) => {
-        const materials = read<Material[]>('materials', []);
-        const filtered = materials.filter((m) => m.id !== id);
-        write('materials', filtered);
-        set({ materials: filtered });
-      },
-    }),
-    {
-      name: 'orcaobra-materials',
-      partialize: (state) => ({ materials: state.materials }),
-    }
-  )
-);
+  deleteMaterial: (id: string) => {
+    repository.deleteMaterial(id);
+    set((state) => ({
+      materials: state.materials.filter((m) => m.id !== id),
+    }));
+  },
+}));

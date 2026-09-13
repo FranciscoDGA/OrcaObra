@@ -1,90 +1,44 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Execution, Budget } from '../lib/types';
-import { read, write } from '../lib/storage';
-import { generateId } from '../lib/id';
+import { repository } from '../lib/repository';
 
 interface ExecutionState {
   executions: Execution[];
   loadExecutions: () => void;
   startExecution: (budget: Budget) => Execution;
   saveExecution: (execution: Execution) => void;
+  deleteExecution: (id: string) => void;
   getExecutionByProject: (projectId: string) => Execution | null;
 }
 
-export const useExecutionStore = create<ExecutionState>()(
-  persist(
-    (set, get) => ({
-      executions: [],
+export const useExecutionStore = create<ExecutionState>()((set, get) => ({
+  executions: repository.getExecutions(),
 
-      loadExecutions: () => {
-        const executions = read<Execution[]>('executions', []);
-        set({ executions });
-      },
+  loadExecutions: () => {
+    set({ executions: repository.getExecutions() });
+  },
 
-      startExecution: (budget: Budget) => {
-        const now = new Date().toISOString();
-        const execution: Execution = {
-          id: generateId(),
-          projectId: budget.id,
-          status: 'in_progress',
-          startDate: now,
-          plannedEndDate: null,
-          actualEndDate: null,
-          progressPercent: 0,
-          plannedLaborCost: budget.laborCost ?? 0,
-          plannedMaterialCost: budget.materialCost ?? 0,
-          plannedFreightCost: budget.transportCost ?? 0,
-          plannedOtherExpense: (budget.foodCost ?? 0) + (budget.fuelCost ?? 0) + (budget.toolCost ?? 0) + (budget.otherCost ?? 0),
-          plannedRiskReserve: budget.riskReserve ?? 0,
-          actualLaborCost: 0,
-          actualMaterialCost: 0,
-          actualFreightCost: 0,
-          actualOtherExpense: 0,
-          actualTotalCost: 0,
-          projectedFinalCost: 0,
-          projectedResult: null,
-          projectedMargin: null,
-          stages: budget.stages.map((s) => ({
-            id: s.id,
-            name: s.name,
-            status: 'pending',
-            progressPercent: 0,
-          })),
-          payments: [],
-          expenses: [],
-          logs: [],
-          createdAt: now,
-          updatedAt: now,
-        };
-        const executions = read<Execution[]>('executions', []);
-        executions.push(execution);
-        write('executions', executions);
-        set({ executions });
-        return execution;
-      },
+  startExecution: (budget: Budget) => {
+    const execution = repository.startExecution(budget);
+    set((state) => ({ executions: [...state.executions, execution] }));
+    return execution;
+  },
 
-      saveExecution: (execution: Execution) => {
-        const executions = read<Execution[]>('executions', []);
-        const index = executions.findIndex((e) => e.id === execution.id);
-        const updated = { ...execution, updatedAt: new Date().toISOString() };
-        if (index === -1) {
-          executions.push(updated);
-        } else {
-          executions[index] = updated;
-        }
-        write('executions', executions);
-        set({ executions });
-      },
+  saveExecution: (execution: Execution) => {
+    repository.saveExecution(execution);
+    set((state) => ({
+      executions: state.executions.map((e) => (e.id === execution.id ? execution : e)),
+    }));
+  },
 
-      getExecutionByProject: (projectId: string) => {
-        const { executions } = get();
-        return executions.find((e) => e.projectId === projectId) ?? null;
-      },
-    }),
-    {
-      name: 'orcaobra-executions',
-      partialize: (state) => ({ executions: state.executions }),
-    }
-  )
-);
+  deleteExecution: (id: string) => {
+    repository.deleteExecution(id);
+    set((state) => ({
+      executions: state.executions.filter((e) => e.id !== id),
+    }));
+  },
+
+  getExecutionByProject: (projectId: string) => {
+    return get().executions.find((e) => e.projectId === projectId) ?? null;
+  },
+}));

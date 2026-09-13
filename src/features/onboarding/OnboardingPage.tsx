@@ -22,7 +22,7 @@ export default function OnboardingPage() {
   const [defaultHelpers, setDefaultHelpers] = useState('1');
   const [minimumMargin, setMinimumMargin] = useState('10');
   const [recommendedMargin, setRecommendedMargin] = useState('20');
-  const [fullMargin, setFullMargin] = useState('35');
+  const [fullMargin, setFullMargin] = useState('30');
 
   const [nameError, setNameError] = useState('');
 
@@ -49,7 +49,7 @@ export default function OnboardingPage() {
       defaultHelpers: Number(defaultHelpers) || 1,
       minimumMargin: Number(minimumMargin) || 10,
       recommendedMargin: Number(recommendedMargin) || 20,
-      fullMargin: Number(fullMargin) || 35,
+      fullMargin: Number(fullMargin) || 30,
     });
 
     completeOnboarding();

@@ -15,7 +15,7 @@ export default function CategoryPage() {
         {cats.map((cat) => (
           <button
             key={cat.id}
-            onClick={() => navigate(`/services/${cat.name}`)}
+            onClick={() => navigate(`/services/${cat.id}`)}
             className="text-left"
           >
             <Card className="hover:border-teal-300 hover:shadow-md transition-all cursor-pointer h-full">

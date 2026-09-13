@@ -1,5 +1,7 @@
+import { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
+import SplashScreen from './components/ui/SplashScreen';
 import { useSettingsStore } from './store/useSettingsStore';
 import PageLayout from './components/layout/PageLayout';
 import OnboardingPage from './features/onboarding/OnboardingPage';
@@ -28,8 +30,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
   return (
     <ToastProvider>
+      {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
       <BrowserRouter>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />

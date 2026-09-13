@@ -24,7 +24,7 @@ export const useSettingsStore = create<SettingsState>()(
         defaultHelpers: 1,
         minimumMargin: 10,
         recommendedMargin: 20,
-        fullMargin: 35,
+        fullMargin: 30,
         defaultWastePercent: 10,
         defaultRiskReservePercent: 5,
         currency: 'R$',

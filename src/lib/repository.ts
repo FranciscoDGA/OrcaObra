@@ -3,6 +3,8 @@ import type {
   Settings,
   Budget,
   Client,
+  Material,
+  Execution,
 } from './types';
 import { read, write } from './storage';
 import { generateId } from './id';
@@ -86,7 +88,7 @@ const DEFAULT_SETTINGS: Settings = {
   defaultHelpers: 1,
   minimumMargin: 10,
   recommendedMargin: 20,
-  fullMargin: 35,
+  fullMargin: 30,
   defaultWastePercent: 10,
   defaultRiskReservePercent: 5,
   currency: 'R$',
@@ -194,5 +196,100 @@ export const repository = {
     const clients = this.getClients();
     const filtered = clients.filter((c) => c.id !== id);
     write('clients', filtered);
+  },
+
+  getMaterials(): Material[] {
+    return read<Material[]>('materials', []);
+  },
+
+  addMaterial(data: Omit<Material, 'id' | 'lastUpdated'>): Material {
+    const materials = this.getMaterials();
+    const now = new Date().toISOString();
+    const material: Material = {
+      ...data,
+      id: generateId(),
+      lastUpdated: now,
+    };
+    materials.push(material);
+    write('materials', materials);
+    return material;
+  },
+
+  updateMaterial(material: Material): void {
+    const materials = this.getMaterials();
+    const index = materials.findIndex((m) => m.id === material.id);
+    if (index === -1) return;
+    material.lastUpdated = new Date().toISOString();
+    materials[index] = material;
+    write('materials', materials);
+  },
+
+  deleteMaterial(id: string): void {
+    const materials = this.getMaterials();
+    const filtered = materials.filter((m) => m.id !== id);
+    write('materials', filtered);
+  },
+
+  getExecutions(): Execution[] {
+    return read<Execution[]>('executions', []);
+  },
+
+  startExecution(budget: Budget): Execution {
+    const now = new Date().toISOString();
+    const execution: Execution = {
+      id: generateId(),
+      projectId: budget.id,
+      status: 'in_progress',
+      startDate: now,
+      plannedEndDate: null,
+      actualEndDate: null,
+      progressPercent: 0,
+      plannedLaborCost: budget.laborCost ?? 0,
+      plannedMaterialCost: budget.materialCost ?? 0,
+      plannedFreightCost: budget.transportCost ?? 0,
+      plannedOtherExpense: (budget.foodCost ?? 0) + (budget.fuelCost ?? 0) + (budget.toolCost ?? 0) + (budget.otherCost ?? 0),
+      plannedRiskReserve: budget.riskReserve ?? 0,
+      actualLaborCost: 0,
+      actualMaterialCost: 0,
+      actualFreightCost: 0,
+      actualOtherExpense: 0,
+      actualTotalCost: 0,
+      projectedFinalCost: 0,
+      projectedResult: null,
+      projectedMargin: null,
+      stages: budget.stages.map((s) => ({
+        id: s.id,
+        name: s.name,
+        status: 'pending',
+        progressPercent: 0,
+      })),
+      payments: [],
+      expenses: [],
+      logs: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    const executions = this.getExecutions();
+    executions.push(execution);
+    write('executions', executions);
+    return execution;
+  },
+
+  saveExecution(execution: Execution): void {
+    const executions = this.getExecutions();
+    const index = executions.findIndex((e) => e.id === execution.id);
+    const updated = { ...execution, updatedAt: new Date().toISOString() };
+    if (index === -1) {
+      executions.push(updated);
+    } else {
+      executions[index] = updated;
+    }
+    write('executions', executions);
+  },
+
+  deleteExecution(id: string): void {
+    const executions = this.getExecutions();
+    const filtered = executions.filter((e) => e.id !== id);
+    write('executions', filtered);
   },
 };
