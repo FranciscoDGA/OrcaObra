@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { User, Settings } from '../lib/types';
-import { repository } from '../lib/repository';
+import { repositoryFacade } from '../lib/repository-facade';
 
 interface SettingsState {
   user: User | null;
@@ -10,7 +10,8 @@ interface SettingsState {
   setSettings: (settings: Partial<Settings>) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
-  loadFromStorage: () => void;
+  loadFromRepository: () => Promise<void>;
+  clearAll: () => void;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -33,12 +34,12 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   onboardingComplete: false,
 
   setUser: (user: User) => {
-    repository.saveUser(user);
+    repositoryFacade.saveUser(user);
     set({ user });
   },
 
-  setSettings: (partial: Partial<Settings>) => {
-    repository.saveSettings(partial);
+  setSettings: async (partial: Partial<Settings>) => {
+    await repositoryFacade.saveSettings(partial);
     const current = get().settings;
     set({ settings: { ...current, ...partial } });
   },
@@ -51,9 +52,13 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     set({ onboardingComplete: false });
   },
 
-  loadFromStorage: () => {
-    const user = repository.getUser();
-    const settings = repository.getSettings();
+  loadFromRepository: async () => {
+    const user = repositoryFacade.getUser();
+    const settings = await repositoryFacade.loadSettings();
     set({ user, settings });
+  },
+
+  clearAll: () => {
+    set({ user: null, settings: { ...DEFAULT_SETTINGS }, onboardingComplete: false });
   },
 }));

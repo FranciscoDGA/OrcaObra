@@ -1,46 +1,54 @@
 import { create } from 'zustand';
 import type { Budget } from '../lib/types';
-import { repository } from '../lib/repository';
+import { repositoryFacade } from '../lib/repository-facade';
 
 interface BudgetState {
   budgets: Budget[];
   editingBudgetId: string | null;
   currentStep: number;
   selectedCategory: string | null;
-  loadBudgets: () => void;
-  addBudget: (budget: Budget) => Budget;
-  updateBudget: (budget: Budget) => void;
-  deleteBudget: (id: string) => void;
+  loadFromRepository: () => Promise<void>;
+  loadBudgets: () => Promise<void>;
+  addBudget: (budget: Budget) => Promise<Budget>;
+  updateBudget: (budget: Budget) => Promise<void>;
+  deleteBudget: (id: string) => Promise<void>;
   setEditingBudget: (id: string | null) => void;
   setCurrentStep: (step: number) => void;
   setSelectedCategory: (cat: string | null) => void;
+  clearAll: () => void;
 }
 
 export const useBudgetStore = create<BudgetState>()((set) => ({
-  budgets: repository.getBudgets(),
+  budgets: [],
   editingBudgetId: null,
   currentStep: 0,
   selectedCategory: null,
 
-  loadBudgets: () => {
-    set({ budgets: repository.getBudgets() });
+  loadFromRepository: async () => {
+    const budgets = await repositoryFacade.loadBudgets();
+    set({ budgets });
   },
 
-  addBudget: (budget: Budget) => {
-    const saved = repository.addBudget(budget);
+  loadBudgets: async () => {
+    const budgets = await repositoryFacade.loadBudgets();
+    set({ budgets });
+  },
+
+  addBudget: async (budget: Budget) => {
+    const saved = await repositoryFacade.addBudget(budget);
     set((state) => ({ budgets: [saved, ...state.budgets] }));
     return saved;
   },
 
-  updateBudget: (budget: Budget) => {
-    repository.updateBudget(budget);
+  updateBudget: async (budget: Budget) => {
+    await repositoryFacade.updateBudget(budget);
     set((state) => ({
       budgets: state.budgets.map((b) => (b.id === budget.id ? budget : b)),
     }));
   },
 
-  deleteBudget: (id: string) => {
-    repository.deleteBudget(id);
+  deleteBudget: async (id: string) => {
+    await repositoryFacade.deleteBudget(id);
     set((state) => ({
       budgets: state.budgets.filter((b) => b.id !== id),
     }));
@@ -56,5 +64,9 @@ export const useBudgetStore = create<BudgetState>()((set) => ({
 
   setSelectedCategory: (cat: string | null) => {
     set({ selectedCategory: cat });
+  },
+
+  clearAll: () => {
+    set({ budgets: [], editingBudgetId: null, currentStep: 0, selectedCategory: null });
   },
 }));

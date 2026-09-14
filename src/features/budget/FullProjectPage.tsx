@@ -85,7 +85,7 @@ export default function FullProjectPage() {
     );
   }
 
-  function handleSave() {
+  async function handleSave() {
     const w = Math.max(0, parseFloat(width) || 0);
     const l = Math.max(0, parseFloat(length) || 0);
     const h = Math.max(0, parseFloat(height) || 0);
@@ -138,7 +138,7 @@ export default function FullProjectPage() {
       description: notes,
     };
 
-    const saved = addBudget(budget);
+    const saved = await addBudget(budget);
     navigate(`/budget/${saved.id}/pricing`);
   }
 

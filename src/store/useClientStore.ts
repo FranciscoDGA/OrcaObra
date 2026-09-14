@@ -1,39 +1,51 @@
 import { create } from 'zustand';
 import type { Client } from '../lib/types';
-import { repository } from '../lib/repository';
+import { repositoryFacade } from '../lib/repository-facade';
 
 interface ClientState {
   clients: Client[];
-  loadClients: () => void;
-  addClient: (data: { name: string; phone?: string; city?: string }) => Client;
-  updateClient: (client: Client) => void;
-  deleteClient: (id: string) => void;
+  loadFromRepository: () => Promise<void>;
+  loadClients: () => Promise<void>;
+  addClient: (data: { name: string; phone?: string; city?: string }) => Promise<Client>;
+  updateClient: (client: Client) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
+  clearAll: () => void;
 }
 
 export const useClientStore = create<ClientState>()((set) => ({
-  clients: repository.getClients(),
+  clients: [],
 
-  loadClients: () => {
-    set({ clients: repository.getClients() });
+  loadFromRepository: async () => {
+    const clients = await repositoryFacade.loadClients();
+    set({ clients });
   },
 
-  addClient: (data: { name: string; phone?: string; city?: string }) => {
-    const client = repository.addClient(data);
+  loadClients: async () => {
+    const clients = await repositoryFacade.loadClients();
+    set({ clients });
+  },
+
+  addClient: async (data: { name: string; phone?: string; city?: string }) => {
+    const client = await repositoryFacade.addClient(data);
     set((state) => ({ clients: [...state.clients, client] }));
     return client;
   },
 
-  updateClient: (client: Client) => {
-    repository.updateClient(client);
+  updateClient: async (client: Client) => {
+    await repositoryFacade.updateClient(client);
     set((state) => ({
       clients: state.clients.map((c) => (c.id === client.id ? client : c)),
     }));
   },
 
-  deleteClient: (id: string) => {
-    repository.deleteClient(id);
+  deleteClient: async (id: string) => {
+    await repositoryFacade.deleteClient(id);
     set((state) => ({
       clients: state.clients.filter((c) => c.id !== id),
     }));
+  },
+
+  clearAll: () => {
+    set({ clients: [] });
   },
 }));

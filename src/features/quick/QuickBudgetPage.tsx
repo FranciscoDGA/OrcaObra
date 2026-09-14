@@ -60,7 +60,7 @@ export default function QuickBudgetPage() {
     return { min: est.min, max: est.max, suggested: (est.min + est.max) / 2 };
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!result) return;
 
     const service = findService(result.parsedData.serviceType);
@@ -103,7 +103,7 @@ export default function QuickBudgetPage() {
       projectMode: 'simple',
     });
 
-    const saved = addBudget(budget);
+    const saved = await addBudget(budget);
     navigate(`/budget/${saved.id}/result`);
   }
 

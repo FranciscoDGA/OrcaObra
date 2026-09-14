@@ -12,7 +12,7 @@ export default function ServicePage() {
 
   const services = servicesForCategory(categoryName ?? '');
 
-  function handleSelect(serviceType: string) {
+  async function handleSelect(serviceType: string) {
     const service = findService(serviceType);
     if (!service) return;
 
@@ -26,7 +26,7 @@ export default function ServicePage() {
       pricingVersion: '',
     });
 
-    const saved = addBudget(emptyBudget);
+    const saved = await addBudget(emptyBudget);
     navigate(`/budget/${saved.id}/step/1`);
   }
 

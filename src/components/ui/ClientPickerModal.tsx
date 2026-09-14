@@ -43,9 +43,9 @@ export default function ClientPickerModal({
     c.city.toLowerCase().includes(search.toLowerCase())
   );
 
-  function handleCreateAndSelect() {
+  async function handleCreateAndSelect() {
     if (!newName.trim()) return;
-    const client = addClient({ name: newName.trim(), phone: newPhone.trim(), city: newCity.trim() });
+    const client = await addClient({ name: newName.trim(), phone: newPhone.trim(), city: newCity.trim() });
     onSelect(client.id);
     onClose();
   }
