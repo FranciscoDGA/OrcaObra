@@ -12,8 +12,19 @@ export type ConfidenceLevel = 'alta' | 'media' | 'baixa';
 export type PaymentMethod = '' | 'a_vista' | 'parcelado' | 'por_etapa' | 'combinado';
 export type PaymentTerm = 'sinal' | 'meio' | 'entrega' | 'semanal' | 'quinzenal' | 'mensal';
 
+export type CompanyStatus = 'active' | 'inactive';
+
+export interface Company {
+  id: string;
+  name: string;
+  status: CompanyStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
+  companyId?: string | null;
   name: string;
   profession: string;
   createdAt: string;
@@ -67,6 +78,7 @@ export interface ProjectMaterial {
 
 export interface Budget {
   id: string;
+  companyId?: string | null;
   clientId: string | null;
   serviceType: string;
   serviceCategory: string;
@@ -132,6 +144,7 @@ export interface Budget {
 
 export interface Client {
   id: string;
+  companyId?: string | null;
   name: string;
   phone: string;
   address: string;
@@ -143,6 +156,7 @@ export interface Client {
 
 export interface Material {
   id: string;
+  companyId?: string | null;
   name: string;
   category: string;
   unit: string;
@@ -182,6 +196,7 @@ export interface ExecutionStage {
 
 export interface Execution {
   id: string;
+  companyId?: string | null;
   projectId: string;
   status: ExecutionStatus;
   startDate: string;

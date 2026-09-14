@@ -5,6 +5,7 @@ import type {
   Client,
   Material,
   Execution,
+  Company,
 } from './types';
 import { read, write } from './storage';
 import { generateId } from './id';
@@ -12,6 +13,7 @@ import { generateId } from './id';
 function normalizeBudget(budget: Budget): Budget {
   return {
     id: budget.id ?? generateId(),
+    companyId: budget.companyId ?? null,
     clientId: budget.clientId ?? null,
     serviceType: budget.serviceType ?? '',
     serviceCategory: budget.serviceCategory ?? '',
@@ -97,6 +99,11 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 export const repository = {
+  getCurrentCompanyId(): string | null {
+    const user = this.getUser();
+    return user?.companyId ?? null;
+  },
+
   getUser(): User | null {
     return read<User | null>('user', null);
   },
@@ -116,6 +123,48 @@ export const repository = {
     write('settings', merged);
   },
 
+  getCompanies(): Company[] {
+    return read<Company[]>('companies', []);
+  },
+
+  getCompany(id: string): Company | null {
+    const companies = this.getCompanies();
+    return companies.find((c) => c.id === id) ?? null;
+  },
+
+  addCompany(data: { name: string }): Company {
+    const companies = this.getCompanies();
+    const now = new Date().toISOString();
+    const company: Company = {
+      id: generateId(),
+      name: data.name,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    };
+    companies.push(company);
+    write('companies', companies);
+    return company;
+  },
+
+  updateCompany(company: Company): void {
+    const companies = this.getCompanies();
+    const index = companies.findIndex((c) => c.id === company.id);
+    if (index === -1) {
+      console.warn(`[repository] updateCompany: company ${company.id} not found`);
+      return;
+    }
+    company.updatedAt = new Date().toISOString();
+    companies[index] = company;
+    write('companies', companies);
+  },
+
+  deleteCompany(id: string): void {
+    const companies = this.getCompanies();
+    const filtered = companies.filter((c) => c.id !== id);
+    write('companies', filtered);
+  },
+
   getBudgets(): Budget[] {
     const raw = read<Budget[]>('budgets', []);
     return raw.map(normalizeBudget);
@@ -124,6 +173,9 @@ export const repository = {
   addBudget(budget: Budget): Budget {
     const budgets = this.getBudgets();
     const normalized = normalizeBudget(budget);
+    if (!normalized.companyId) {
+      normalized.companyId = this.getCurrentCompanyId();
+    }
     budgets.push(normalized);
     write('budgets', budgets);
     return normalized;
@@ -168,6 +220,7 @@ export const repository = {
     const now = new Date().toISOString();
     const client: Client = {
       id: generateId(),
+      companyId: this.getCurrentCompanyId(),
       name: data.name,
       phone: data.phone ?? '',
       address: data.address ?? '',
@@ -214,6 +267,7 @@ export const repository = {
     const material: Material = {
       ...data,
       id: generateId(),
+      companyId: this.getCurrentCompanyId(),
       lastUpdated: now,
     };
     materials.push(material);
@@ -247,6 +301,7 @@ export const repository = {
     const now = new Date().toISOString();
     const execution: Execution = {
       id: generateId(),
+      companyId: budget.companyId ?? this.getCurrentCompanyId(),
       projectId: budget.id,
       status: 'in_progress',
       startDate: now,
@@ -300,5 +355,26 @@ export const repository = {
     const executions = this.getExecutions();
     const filtered = executions.filter((e) => e.id !== id);
     write('executions', filtered);
+  },
+
+  migrateCompanyOwnership(): void {
+    const companies = this.getCompanies();
+    if (companies.length > 0) return;
+
+    const user = this.getUser();
+    if (!user) return;
+
+    const now = new Date().toISOString();
+    const company: Company = {
+      id: generateId(),
+      name: user.name || 'Empresa padrão',
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    };
+    write('companies', [company]);
+
+    const updatedUser = { ...user, companyId: company.id };
+    write('user', updatedUser);
   },
 };

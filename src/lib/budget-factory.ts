@@ -5,6 +5,7 @@ export function createEmptyBudget(overrides?: Partial<Budget>): Budget {
   const now = new Date().toISOString();
   const defaults: Budget = {
     id: generateId(),
+    companyId: null,
     clientId: null,
     serviceType: '',
     serviceCategory: '',

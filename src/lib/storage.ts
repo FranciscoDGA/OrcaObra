@@ -105,4 +105,41 @@ export function migrateLegacySettings(): void {
   }
 }
 
+interface LegacyCompanyUser {
+  id?: unknown;
+  name?: unknown;
+}
+
+function migrateCompanyOwnership(): void {
+  try {
+    const companiesRaw = localStorage.getItem(PREFIX + 'companies');
+    if (companiesRaw !== null) return;
+
+    const userRaw = localStorage.getItem(PREFIX + 'user');
+    if (userRaw === null) return;
+
+    const user: unknown = JSON.parse(userRaw);
+    if (typeof user !== 'object' || user === null) return;
+
+    const u = user as LegacyCompanyUser;
+    if (typeof u.id !== 'string' || typeof u.name !== 'string') return;
+
+    const now = new Date().toISOString();
+    const company = {
+      id: `comp-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`,
+      name: u.name || 'Empresa padrão',
+      status: 'active' as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    write('companies', [company]);
+
+    const updatedUser = { ...(user as Record<string, unknown>), companyId: company.id };
+    write('user', updatedUser);
+  } catch {
+    // corrupted data — ignore and continue
+  }
+}
+
 migrateLegacySettings();
+migrateCompanyOwnership();
