@@ -26,6 +26,15 @@ import FullProjectPage from './features/budget/FullProjectPage';
 import EditBudgetPage from './features/budget/EditBudgetPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import MigrationPage from './pages/MigrationPage';
+import { hasLocalData, getMigrationStatus } from './lib/migration-service';
+
+function needsMigrationCheck(): boolean {
+  if (!isSupabaseConfigured()) return false;
+  if (!hasLocalData()) return false;
+  const status = getMigrationStatus();
+  return status.status !== 'completed';
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading, initialized } = useAuthStore();
@@ -37,6 +46,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     if (loading) return null;
     if (!session) return <Navigate to="/login" replace />;
     if (!user?.name) return <OnboardingPage />;
+    if (needsMigrationCheck()) return <Navigate to="/migration" replace />;
     return <PageLayout>{children}</PageLayout>;
   }
 
@@ -60,6 +70,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/cadastro" element={<SignupPage />} />
+          <Route path="/migration" element={<MigrationPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/new" element={<ProtectedRoute><NewBudgetPage /></ProtectedRoute>} />
