@@ -7,6 +7,11 @@ import { useExecutionStore } from '../../store/useExecutionStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney, formatDate } from '../../lib/money';
 import { generateId } from '../../lib/id';
+import { recalcExecution } from '../../lib/execution-utils';
+import {
+  PAYMENT_CATEGORIES, EXPENSE_CATEGORIES,
+  STAGE_STATUS_COLORS, STAGE_STATUS_LABELS,
+} from '../../lib/constants';
 import PageHeader from '../../components/layout/PageHeader';
 import PageLayout from '../../components/layout/PageLayout';
 import Card from '../../components/ui/Card';
@@ -14,38 +19,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
-import type { Execution, Payment, Expense, LogEntry, ExecutionStage } from '../../lib/types';
-
-const PAYMENT_CATEGORIES = [
-  { value: 'sinal', label: 'Sinal' },
-  { value: 'etapa', label: 'Pagamento por etapa' },
-  { value: 'mensal', label: 'Mensal' },
-  { value: 'final', label: 'Pagamento final' },
-  { value: 'outro', label: 'Outro' },
-];
-
-const EXPENSE_CATEGORIES = [
-  { value: 'material', label: 'Material' },
-  { value: 'mao_de_obra', label: 'Mão de obra' },
-  { value: 'transporte', label: 'Transporte' },
-  { value: 'ferramenta', label: 'Ferramenta' },
-  { value: 'alimentacao', label: 'Alimentação' },
-  { value: 'outro', label: 'Outro' },
-];
-
-const STAGE_STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-slate-100 text-slate-600',
-  in_progress: 'bg-blue-100 text-blue-700',
-  completed: 'bg-emerald-100 text-emerald-700',
-  paused: 'bg-amber-100 text-amber-700',
-};
-
-const STAGE_STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendente',
-  in_progress: 'Em andamento',
-  completed: 'Concluído',
-  paused: 'Pausado',
-};
+import type { Execution, Payment, Expense, LogEntry, ExecutionStage, StageStatus } from '../../lib/types';
 
 export default function WorkDetailPage() {
   const navigate = useNavigate();
@@ -83,25 +57,6 @@ export default function WorkDetailPage() {
 
   const budget = execution ? budgets.find((b) => b.id === execution.projectId) ?? null : null;
 
-  function recalcExecution(exec: Execution): Execution {
-    const totalPayments = exec.payments.reduce((s, p) => s + p.amount, 0);
-    const totalExpenses = exec.expenses.reduce((s, e) => s + e.amount, 0);
-    const actualTotal = exec.actualLaborCost + exec.actualMaterialCost + exec.actualFreightCost + totalExpenses;
-    const projected = actualTotal > 0 ? actualTotal : 0;
-    const result = totalPayments > 0 ? totalPayments - projected : null;
-    const margin = totalPayments > 0 ? ((totalPayments - projected) / totalPayments) * 100 : null;
-
-    return {
-      ...exec,
-      actualOtherExpense: totalExpenses,
-      actualTotalCost: actualTotal,
-      projectedFinalCost: projected,
-      projectedResult: result,
-      projectedMargin: margin,
-      updatedAt: new Date().toISOString(),
-    };
-  }
-
   function handleSaveProgress() {
     if (!execution) return;
     const value = Math.min(100, Math.max(0, Number(progressInput) || 0));
@@ -109,7 +64,7 @@ export default function WorkDetailPage() {
     saveExecution(updated);
   }
 
-  function handleStageToggle(stageId: string, newStatus: string) {
+  function handleStageToggle(stageId: string, newStatus: StageStatus) {
     if (!execution) return;
     const stages = execution.stages.map((s: ExecutionStage) =>
       s.id === stageId
@@ -293,7 +248,7 @@ export default function WorkDetailPage() {
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      {['pending', 'in_progress', 'completed', 'paused'].map((status) => (
+                      {(['pending', 'in_progress', 'completed', 'paused'] as StageStatus[]).map((status) => (
                         <button
                           key={status}
                           onClick={() => handleStageToggle(stage.id, status)}

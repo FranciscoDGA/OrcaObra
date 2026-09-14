@@ -137,7 +137,10 @@ export const repository = {
   updateBudget(budget: Budget): void {
     const budgets = this.getBudgets();
     const index = budgets.findIndex((b) => b.id === budget.id);
-    if (index === -1) return;
+    if (index === -1) {
+      console.warn(`[repository] updateBudget: budget ${budget.id} not found`);
+      return;
+    }
     const normalized = normalizeBudget(budget);
     normalized.updatedAt = new Date().toISOString();
     budgets[index] = normalized;
@@ -186,7 +189,10 @@ export const repository = {
   updateClient(client: Client): void {
     const clients = this.getClients();
     const index = clients.findIndex((c) => c.id === client.id);
-    if (index === -1) return;
+    if (index === -1) {
+      console.warn(`[repository] updateClient: client ${client.id} not found`);
+      return;
+    }
     client.updatedAt = new Date().toISOString();
     clients[index] = client;
     write('clients', clients);
@@ -218,7 +224,10 @@ export const repository = {
   updateMaterial(material: Material): void {
     const materials = this.getMaterials();
     const index = materials.findIndex((m) => m.id === material.id);
-    if (index === -1) return;
+    if (index === -1) {
+      console.warn(`[repository] updateMaterial: material ${material.id} not found`);
+      return;
+    }
     material.lastUpdated = new Date().toISOString();
     materials[index] = material;
     write('materials', materials);

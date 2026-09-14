@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, HardHat, Ruler, TrendingUp, ChevronRight } from 'lucide-react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { generateId } from '../../lib/id';
+import { PROFESSIONS } from '../../lib/constants';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-
-const PROFESSIONS = ['Pedreiro', 'Mestre de obra', 'Empreiteiro', 'Outro'];
 
 export default function OnboardingPage() {
   const navigate = useNavigate();

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calculator } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { findService } from '../../data/services';
 import { calculatePricing, estimateDays } from '../../lib/pricing';
+import type { DaysCalculationMode } from '../../lib/types';
 import PageHeader from '../../components/layout/PageHeader';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
@@ -18,7 +20,38 @@ export default function PricingPage() {
   const settings = useSettingsStore((s) => s.settings);
 
   const found = budgets.find((b) => b.id === id);
-  if (!found) {
+  const isFullProject = found?.projectMode === 'full';
+  const svc = found && !isFullProject ? findService(found.serviceType) : null;
+
+  const budget = found;
+  const totalSteps = isFullProject ? 1 : (svc?.steps?.length ?? 1);
+  const quantity = budget
+    ? (budget.quantities.quantity1 ??
+      budget.measurements.floorArea ??
+      budget.measurements.area ??
+      budget.measurements.wallArea ??
+      budget.measurements.length ??
+      1)
+    : 1;
+
+  const [daysMode, setDaysMode] = useState<DaysCalculationMode>(budget?.daysCalculationMode || 'manual');
+  const [manualDays, setManualDays] = useState(budget?.estimatedDays?.toString() ?? '');
+  const [productivity, setProductivity] = useState(budget?.productivityPerDay?.toString() ?? '');
+  const [workerRate, setWorkerRate] = useState(budget?.workerDailyRate?.toString() ?? settings.workerDailyRate.toString());
+  const [helperRate, setHelperRate] = useState(budget?.helperDailyRate?.toString() ?? settings.helperDailyRate.toString());
+  const [helpers, setHelpers] = useState(budget?.numberOfHelpers?.toString() ?? settings.defaultHelpers.toString());
+  const [transport, setTransport] = useState(budget?.transportCost?.toString() ?? '');
+  const [food, setFood] = useState(budget?.foodCost?.toString() ?? '');
+  const [fuel, setFuel] = useState(budget?.fuelCost?.toString() ?? '');
+  const [tools, setTools] = useState(budget?.toolCost?.toString() ?? '');
+  const [other, setOther] = useState(budget?.otherCost?.toString() ?? '');
+  const [riskPct, setRiskPct] = useState(budget?.riskReservePercent?.toString() ?? settings.defaultRiskReservePercent.toString());
+  const [material, setMaterial] = useState(budget?.materialCost?.toString() ?? '');
+  const [minMargin, setMinMargin] = useState(budget?.minimumMargin?.toString() ?? settings.minimumMargin.toString());
+  const [recMargin, setRecMargin] = useState(budget?.recommendedMargin?.toString() ?? settings.recommendedMargin.toString());
+  const [fullMarginVal, setFullMarginVal] = useState(budget?.fullMargin?.toString() ?? settings.fullMargin.toString());
+
+  if (!budget) {
     return (
       <div className="pb-6">
         <PageHeader title="Orçamento não encontrado" backTo="/" />
@@ -27,102 +60,88 @@ export default function PricingPage() {
     );
   }
 
-  const isFullProject = found.projectMode === 'full';
-  const svc = isFullProject ? null : findService(found.serviceType);
-
   if (!isFullProject && !svc) {
     return (
       <div className="pb-6">
         <PageHeader title="Serviço não encontrado" backTo="/" />
-        <p className="text-slate-500 text-center mt-8">Tipo de serviço "{found.serviceType}" não encontrado no catálogo.</p>
+        <p className="text-slate-500 text-center mt-8">Tipo de serviço "{budget.serviceType}" não encontrado no catálogo.</p>
       </div>
     );
   }
 
-  const budget = found;
-  const totalSteps = isFullProject ? 1 : (svc?.steps?.length ?? 1);
-  const quantity =
-    budget.quantities.quantity1 ??
-    budget.measurements.floorArea ??
-    budget.measurements.area ??
-    budget.measurements.wallArea ??
-    budget.measurements.length ??
-    1;
-
   function handleCalculate() {
-    const b = budget!;
-    const el = (field: string) =>
-      document.querySelector<HTMLInputElement>(`[data-field="${field}"]`);
-
-    const daysMode = el('daysCalculationMode')?.value ?? b.daysCalculationMode ?? 'manual';
-    const manualDays = parseFloat(el('estimatedDays')?.value ?? '') || b.estimatedDays;
-    const productivity = parseFloat(el('productivityPerDay')?.value ?? '') || b.productivityPerDay;
-    const workerRate = parseFloat(el('workerDailyRate')?.value ?? '') || settings.workerDailyRate;
-    const helperRate = parseFloat(el('helperDailyRate')?.value ?? '') || settings.helperDailyRate;
-    const helpers = parseInt(el('numberOfHelpers')?.value ?? '', 10) || settings.defaultHelpers;
-    const transport = parseFloat(el('transportCost')?.value ?? '') || 0;
-    const food = parseFloat(el('foodCost')?.value ?? '') || 0;
-    const fuel = parseFloat(el('fuelCost')?.value ?? '') || 0;
-    const tools = parseFloat(el('toolCost')?.value ?? '') || 0;
-    const other = parseFloat(el('otherCost')?.value ?? '') || 0;
-    const riskPct = parseFloat(el('riskReservePercent')?.value ?? '') || settings.defaultRiskReservePercent;
-    const material = parseFloat(el('materialCost')?.value ?? '') || b.materialCost;
-    const minMargin = parseFloat(el('minimumMargin')?.value ?? '') || settings.minimumMargin;
-    const recMargin = parseFloat(el('recommendedMargin')?.value ?? '') || settings.recommendedMargin;
-    const fullMargin = parseFloat(el('fullMargin')?.value ?? '') || settings.fullMargin;
+    if (!budget) return;
+    const b = budget;
+    const parsedDaysMode = daysMode;
+    const parsedManualDays = parseFloat(manualDays) || b.estimatedDays;
+    const parsedProductivity = parseFloat(productivity) || b.productivityPerDay;
+    const parsedWorkerRate = parseFloat(workerRate) || settings.workerDailyRate;
+    const parsedHelperRate = parseFloat(helperRate) || settings.helperDailyRate;
+    const parsedHelpers = parseInt(helpers, 10) || settings.defaultHelpers;
+    const parsedTransport = parseFloat(transport) || 0;
+    const parsedFood = parseFloat(food) || 0;
+    const parsedFuel = parseFloat(fuel) || 0;
+    const parsedTools = parseFloat(tools) || 0;
+    const parsedOther = parseFloat(other) || 0;
+    const parsedRiskPct = parseFloat(riskPct) || settings.defaultRiskReservePercent;
+    const parsedMaterial = parseFloat(material) || b.materialCost;
+    const parsedMinMargin = parseFloat(minMargin) || settings.minimumMargin;
+    const parsedRecMargin = parseFloat(recMargin) || settings.recommendedMargin;
+    const parsedFullMargin = parseFloat(fullMarginVal) || settings.fullMargin;
 
     const estimatedDays = estimateDays({
-      mode: daysMode,
-      manualDays,
+      mode: parsedDaysMode,
+      manualDays: parsedManualDays,
       quantity,
-      productivityPerDay: productivity,
+      productivityPerDay: parsedProductivity,
     });
 
     const result = calculatePricing({
-      workerDailyRate: workerRate,
-      helperDailyRate: helperRate,
-      numberOfHelpers: helpers,
-      daysCalculationMode: daysMode,
-      manualDays,
-      productivityPerDay: productivity,
+      workerDailyRate: parsedWorkerRate,
+      helperDailyRate: parsedHelperRate,
+      numberOfHelpers: parsedHelpers,
+      daysCalculationMode: parsedDaysMode,
+      manualDays: parsedManualDays,
+      productivityPerDay: parsedProductivity,
       quantity,
-      transportCost: transport,
-      foodCost: food,
-      fuelCost: fuel,
-      toolCost: tools,
-      otherCost: other,
-      materialCost: material,
-      riskReservePercent: riskPct,
-      minimumMargin: minMargin,
-      recommendedMargin: recMargin,
-      fullMargin: fullMargin,
+      transportCost: parsedTransport,
+      foodCost: parsedFood,
+      fuelCost: parsedFuel,
+      toolCost: parsedTools,
+      otherCost: parsedOther,
+      materialCost: parsedMaterial,
+      riskReservePercent: parsedRiskPct,
+      minimumMargin: parsedMinMargin,
+      recommendedMargin: parsedRecMargin,
+      fullMargin: parsedFullMargin,
     });
 
     const updated = {
       ...b,
-      daysCalculationMode: daysMode,
+      id: b.id,
+      daysCalculationMode: parsedDaysMode,
       estimatedDays,
-      productivityPerDay: productivity,
-      workerDailyRate: workerRate,
-      helperDailyRate: helperRate,
-      numberOfHelpers: helpers,
-      transportCost: transport,
-      foodCost: food,
-      fuelCost: fuel,
-      toolCost: tools,
-      otherCost: other,
+      productivityPerDay: parsedProductivity,
+      workerDailyRate: parsedWorkerRate,
+      helperDailyRate: parsedHelperRate,
+      numberOfHelpers: parsedHelpers,
+      transportCost: parsedTransport,
+      foodCost: parsedFood,
+      fuelCost: parsedFuel,
+      toolCost: parsedTools,
+      otherCost: parsedOther,
       expenseCost: result.expenseCost,
-      riskReservePercent: riskPct,
+      riskReservePercent: parsedRiskPct,
       riskReserve: result.riskReserve,
-      materialCost: material,
+      materialCost: parsedMaterial,
       laborCost: result.laborCost,
       teamDailyCost: result.teamDailyCost,
-      workerCost: workerRate * estimatedDays,
-      helperCost: helperRate * helpers * estimatedDays,
+      workerCost: parsedWorkerRate * estimatedDays,
+      helperCost: parsedHelperRate * parsedHelpers * estimatedDays,
       totalCost: result.totalCost,
-      minimumMargin: minMargin,
-      recommendedMargin: recMargin,
-      fullMargin: fullMargin,
+      minimumMargin: parsedMinMargin,
+      recommendedMargin: parsedRecMargin,
+      fullMargin: parsedFullMargin,
       minimumPrice: result.minimumPrice,
       recommendedPrice: result.recommendedPrice,
       fullPrice: result.fullPrice,
@@ -152,28 +171,28 @@ export default function PricingPage() {
           <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Prazo</h3>
           <div className="space-y-3">
             <Select
-              data-field="daysCalculationMode"
               label="Modo de cálculo de dias"
               options={[
                 { value: 'manual', label: 'Manual' },
                 { value: 'productivity', label: 'Por produtividade' },
               ]}
-              defaultValue={budget.daysCalculationMode || 'manual'}
+              value={daysMode}
+              onChange={(e) => setDaysMode(e.target.value as DaysCalculationMode)}
             />
             <Input
-              data-field="estimatedDays"
               type="number"
               label="Dias estimados"
               step="1"
-              defaultValue={budget.estimatedDays ?? ''}
+              value={manualDays}
+              onChange={(e) => setManualDays(e.target.value)}
               help="Modo manual: informe diretamente"
             />
             <Input
-              data-field="productivityPerDay"
               type="number"
               label="Produtividade por dia"
               step="0.01"
-              defaultValue={budget.productivityPerDay ?? ''}
+              value={productivity}
+              onChange={(e) => setProductivity(e.target.value)}
               help="Modo produtividade: unidade/dia"
             />
           </div>
@@ -183,25 +202,25 @@ export default function PricingPage() {
           <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Mão de obra</h3>
           <div className="space-y-3">
             <Input
-              data-field="workerDailyRate"
               type="number"
               label="Diária do pedreiro (R$)"
               step="0.01"
-              defaultValue={budget.workerDailyRate ?? settings.workerDailyRate}
+              value={workerRate}
+              onChange={(e) => setWorkerRate(e.target.value)}
             />
             <Input
-              data-field="helperDailyRate"
               type="number"
               label="Diária do ajudante (R$)"
               step="0.01"
-              defaultValue={budget.helperDailyRate ?? settings.helperDailyRate}
+              value={helperRate}
+              onChange={(e) => setHelperRate(e.target.value)}
             />
             <Input
-              data-field="numberOfHelpers"
               type="number"
               label="Número de ajudantes"
               step="1"
-              defaultValue={budget.numberOfHelpers ?? settings.defaultHelpers}
+              value={helpers}
+              onChange={(e) => setHelpers(e.target.value)}
             />
           </div>
         </section>
@@ -210,39 +229,39 @@ export default function PricingPage() {
           <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Despesas</h3>
           <div className="space-y-3">
             <Input
-              data-field="transportCost"
               type="number"
               label="Transporte (R$)"
               step="0.01"
-              defaultValue={budget.transportCost || ''}
+              value={transport}
+              onChange={(e) => setTransport(e.target.value)}
             />
             <Input
-              data-field="foodCost"
               type="number"
               label="Alimentação (R$)"
               step="0.01"
-              defaultValue={budget.foodCost || ''}
+              value={food}
+              onChange={(e) => setFood(e.target.value)}
             />
             <Input
-              data-field="fuelCost"
               type="number"
               label="Combustível (R$)"
               step="0.01"
-              defaultValue={budget.fuelCost || ''}
+              value={fuel}
+              onChange={(e) => setFuel(e.target.value)}
             />
             <Input
-              data-field="toolCost"
               type="number"
               label="Ferramentas (R$)"
               step="0.01"
-              defaultValue={budget.toolCost || ''}
+              value={tools}
+              onChange={(e) => setTools(e.target.value)}
             />
             <Input
-              data-field="otherCost"
               type="number"
               label="Outras despesas (R$)"
               step="0.01"
-              defaultValue={budget.otherCost || ''}
+              value={other}
+              onChange={(e) => setOther(e.target.value)}
             />
           </div>
         </section>
@@ -251,18 +270,18 @@ export default function PricingPage() {
           <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Reserva e materiais</h3>
           <div className="space-y-3">
             <Input
-              data-field="riskReservePercent"
               type="number"
               label="Reserva de risco (%)"
               step="1"
-              defaultValue={budget.riskReservePercent ?? settings.defaultRiskReservePercent}
+              value={riskPct}
+              onChange={(e) => setRiskPct(e.target.value)}
             />
             <Input
-              data-field="materialCost"
               type="number"
               label="Custo dos materiais (R$)"
               step="0.01"
-              defaultValue={budget.materialCost || ''}
+              value={material}
+              onChange={(e) => setMaterial(e.target.value)}
             />
           </div>
         </section>
@@ -271,25 +290,25 @@ export default function PricingPage() {
           <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Margens</h3>
           <div className="space-y-3">
             <Input
-              data-field="minimumMargin"
               type="number"
               label="Margem mínima (%)"
               step="1"
-              defaultValue={budget.minimumMargin ?? settings.minimumMargin}
+              value={minMargin}
+              onChange={(e) => setMinMargin(e.target.value)}
             />
             <Input
-              data-field="recommendedMargin"
               type="number"
               label="Margem recomendada (%)"
               step="1"
-              defaultValue={budget.recommendedMargin ?? settings.recommendedMargin}
+              value={recMargin}
+              onChange={(e) => setRecMargin(e.target.value)}
             />
             <Input
-              data-field="fullMargin"
               type="number"
               label="Margem cheia (%)"
               step="1"
-              defaultValue={budget.fullMargin ?? settings.fullMargin}
+              value={fullMarginVal}
+              onChange={(e) => setFullMarginVal(e.target.value)}
             />
           </div>
         </section>

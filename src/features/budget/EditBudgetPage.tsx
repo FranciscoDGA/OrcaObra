@@ -4,6 +4,7 @@ import { Save, Trash2, User } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useClientStore } from '../../store/useClientStore';
 import { calculateForService } from '../../lib/geometry';
+import { PROJECT_TYPES, DEFAULT_STAGES } from '../../lib/constants';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -11,19 +12,6 @@ import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
 import ClientPickerModal from '../../components/ui/ClientPickerModal';
-
-const PROJECT_TYPES = ['Casa', 'Edícula', 'Reforma', 'Ampliação', 'Comércio', 'Outro'];
-
-const STAGE_NAMES = [
-  'Fundação',
-  'Estrutura',
-  'Alvenaria',
-  'Cobertura',
-  'Reboco',
-  'Contrapiso',
-  'Piso',
-  'Portas e janelas',
-];
 
 export default function EditBudgetPage() {
   const navigate = useNavigate();
@@ -252,7 +240,7 @@ export default function EditBudgetPage() {
             <Card>
               <h3 className="font-bold text-slate-900 mb-3">Etapas da obra</h3>
               <div className="space-y-2">
-                {STAGE_NAMES.map((stage) => (
+                {DEFAULT_STAGES.map((stage) => (
                   <label
                     key={stage}
                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${

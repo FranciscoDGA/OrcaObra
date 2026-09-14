@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useBudgetStore } from '../../store/useBudgetStore';
@@ -8,6 +9,28 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
+import type { ServiceField } from '../../lib/types';
+
+function initFieldValues(
+  fields: ServiceField[],
+  budget: { measurements: Record<string, number | null>; quantities: Record<string, number>; options: Record<string, string>; description: string },
+): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const field of fields) {
+    let raw: string | number | null | undefined;
+    if (field.target === 'measurements') {
+      raw = budget.measurements[field.id];
+    } else if (field.target === 'quantities') {
+      raw = budget.quantities[field.id];
+    } else if (field.target === 'options') {
+      raw = budget.options[field.id] ?? (field.type === 'yesno' ? '' : field.options?.[0] ?? '');
+    } else {
+      raw = budget.description;
+    }
+    values[field.id] = raw != null ? String(raw) : '';
+  }
+  return values;
+}
 
 export default function BudgetStepPage() {
   const navigate = useNavigate();
@@ -19,8 +42,16 @@ export default function BudgetStepPage() {
 
   const found = budgets.find((b) => b.id === id);
   const svc = found ? findService(found.serviceType) : undefined;
+  const budget = found;
+  const service = svc;
+  const totalSteps = service?.steps?.length ?? 1;
+  const currentStepFields = service?.steps?.[step - 1];
 
-  if (!found || !svc) {
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>(
+    () => (currentStepFields && budget ? initFieldValues(currentStepFields, budget) : {}),
+  );
+
+  if (!budget || !service) {
     return (
       <div className="pb-6">
         <PageHeader title="Orçamento não encontrado" backTo="/" />
@@ -29,35 +60,24 @@ export default function BudgetStepPage() {
     );
   }
 
-  const budget = found;
-  const service = svc;
-
-  const totalSteps = service.steps.length;
-  const currentStepFields = service.steps[step - 1];
-
   if (!currentStepFields) {
     navigate(`/budget/${id}/pricing`);
     return null;
   }
 
-  function collectFields(): {
-    measurements: Record<string, number | null>;
-    quantities: Record<string, number>;
-    options: Record<string, string>;
-    description: string;
-  } {
-    const b = budget!;
-    const measurements = { ...b.measurements };
-    const quantities = { ...b.quantities };
-    const options = { ...b.options };
-    let description = b.description;
+  function handleFieldChange(fieldId: string, value: string) {
+    setFieldValues((prev) => ({ ...prev, [fieldId]: value }));
+  }
 
-    currentStepFields.forEach((field) => {
-      const el = document.querySelector<HTMLElement>(`[data-field="${field.id}"]`);
-      if (!el) return;
+  function handleContinue() {
+    if (!budget || !currentStepFields || !service) return;
+    const measurements = { ...budget.measurements };
+    const quantities = { ...budget.quantities };
+    const options = { ...budget.options };
+    let description = budget.description;
 
-      const raw = (el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).value;
-
+    for (const field of currentStepFields) {
+      const raw = fieldValues[field.id] ?? '';
       if (field.target === 'measurements') {
         measurements[field.id] = raw === '' ? null : parseFloat(raw);
       } else if (field.target === 'quantities') {
@@ -67,22 +87,17 @@ export default function BudgetStepPage() {
       } else if (field.target === 'description') {
         description = raw;
       }
-    });
+    }
 
-    return { measurements, quantities, options, description };
-  }
-
-  function handleContinue() {
-    const collected = collectFields();
-    const svc = service!;
-    const calculated = calculateForService(collected.measurements, svc.geometry);
+    const calculated = calculateForService(measurements, service.geometry);
 
     const updated = {
-      ...budget!,
-      measurements: collected.measurements,
-      quantities: collected.quantities,
-      options: collected.options,
-      description: collected.description,
+      ...budget,
+      id: budget.id,
+      measurements,
+      quantities,
+      options,
+      description,
       calculated,
       updatedAt: new Date().toISOString(),
     };
@@ -97,6 +112,7 @@ export default function BudgetStepPage() {
   }
 
   function handleBack() {
+    if (!service) return;
     if (step > 1) {
       navigate(`/budget/${id}/step/${step - 1}`);
     } else {
@@ -104,27 +120,19 @@ export default function BudgetStepPage() {
     }
   }
 
-  function renderField(field: (typeof currentStepFields)[number]) {
-    const currentValue =
-      field.target === 'measurements'
-        ? budget.measurements[field.id] ?? ''
-        : field.target === 'quantities'
-          ? budget.quantities[field.id] ?? ''
-          : field.target === 'options'
-            ? budget.options[field.id] ?? (field.type === 'yesno' ? '' : field.options?.[0] ?? '')
-            : budget.description;
+  function renderField(field: ServiceField) {
+    const value = fieldValues[field.id] ?? '';
 
     switch (field.type) {
       case 'number':
         return (
           <Input
             key={field.id}
-            data-field={field.id}
-            data-target={field.target}
             type="number"
             label={field.label}
             step={field.step ?? '0.01'}
-            defaultValue={currentValue}
+            value={value}
+            onChange={(e) => handleFieldChange(field.id, e.target.value)}
             required={field.required}
             inputMode="decimal"
           />
@@ -133,11 +141,10 @@ export default function BudgetStepPage() {
         return (
           <Select
             key={field.id}
-            data-field={field.id}
-            data-target={field.target}
             label={field.label}
             options={(field.options ?? []).map((o) => ({ value: o, label: o }))}
-            defaultValue={currentValue}
+            value={value}
+            onChange={(e) => handleFieldChange(field.id, e.target.value)}
             required={field.required}
           />
         );
@@ -145,15 +152,14 @@ export default function BudgetStepPage() {
         return (
           <Select
             key={field.id}
-            data-field={field.id}
-            data-target={field.target}
             label={field.label}
             options={[
               { value: '', label: 'Selecione...' },
               { value: 'Sim', label: 'Sim' },
               { value: 'Não', label: 'Não' },
             ]}
-            defaultValue={currentValue}
+            value={value}
+            onChange={(e) => handleFieldChange(field.id, e.target.value)}
             required={field.required}
           />
         );
@@ -161,10 +167,9 @@ export default function BudgetStepPage() {
         return (
           <Textarea
             key={field.id}
-            data-field={field.id}
-            data-target={field.target}
             label={field.label}
-            defaultValue={currentValue}
+            value={value}
+            onChange={(e) => handleFieldChange(field.id, e.target.value)}
             required={field.required}
           />
         );
@@ -172,11 +177,10 @@ export default function BudgetStepPage() {
         return (
           <Input
             key={field.id}
-            data-field={field.id}
-            data-target={field.target}
             type="text"
             label={field.label}
-            defaultValue={currentValue}
+            value={value}
+            onChange={(e) => handleFieldChange(field.id, e.target.value)}
             required={field.required}
           />
         );

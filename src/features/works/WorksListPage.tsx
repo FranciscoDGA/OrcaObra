@@ -4,16 +4,10 @@ import { ArrowRight, FolderOpen } from 'lucide-react';
 import { useExecutionStore } from '../../store/useExecutionStore';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { formatMoney } from '../../lib/money';
+import { EXECUTION_STATUS_LABELS } from '../../lib/constants';
 import PageHeader from '../../components/layout/PageHeader';
 import PageLayout from '../../components/layout/PageLayout';
 import Card from '../../components/ui/Card';
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  in_progress: { label: 'Em andamento', color: 'text-blue-700 bg-blue-50' },
-  completed: { label: 'Concluído', color: 'text-emerald-700 bg-emerald-50' },
-  paused: { label: 'Pausado', color: 'text-amber-700 bg-amber-50' },
-  cancelled: { label: 'Cancelado', color: 'text-red-700 bg-red-50' },
-};
 
 export default function WorksListPage() {
   const navigate = useNavigate();
@@ -45,7 +39,7 @@ export default function WorksListPage() {
       ) : (
         <div className="space-y-2">
           {executions.map((execution) => {
-            const statusInfo = STATUS_LABELS[execution.status] ?? { label: execution.status, color: 'text-slate-700 bg-slate-50' };
+            const statusInfo = EXECUTION_STATUS_LABELS[execution.status] ?? { label: execution.status, color: 'text-slate-700 bg-slate-50' };
 
             return (
               <button

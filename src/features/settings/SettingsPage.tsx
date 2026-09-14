@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { Save, Settings, MapPin } from 'lucide-react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { REGIONS, MAJOR_CITIES, getDefaultRatesForCity, getDefaultRatesForRegion } from '../../data/regions';
+import { PROFESSIONS } from '../../lib/constants';
 import PageHeader from '../../components/layout/PageHeader';
 import PageLayout from '../../components/layout/PageLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-
-const PROFESSIONS = ['Pedreiro', 'Mestre de obra', 'Empreiteiro', 'Outro'];
 
 export default function SettingsPage() {
   const { user, settings, setSettings, setUser } = useSettingsStore();

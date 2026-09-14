@@ -5,6 +5,8 @@ import { useBudgetStore } from '../../store/useBudgetStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { generateId } from '../../lib/id';
 import { calculateForService } from '../../lib/geometry';
+import { createEmptyBudget } from '../../lib/budget-factory';
+import { PROJECT_TYPES, DEFAULT_STAGES, EXTRA_SERVICES } from '../../lib/constants';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
@@ -13,105 +15,12 @@ import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
 import type { Budget, Stage } from '../../lib/types';
 
-const PROJECT_TYPES = ['Casa', 'Edícula', 'Reforma', 'Ampliação', 'Comércio', 'Outro'];
-
-const DEFAULT_STAGES = [
-  'Fundação',
-  'Estrutura',
-  'Alvenaria',
-  'Cobertura',
-  'Reboco',
-  'Contrapiso',
-  'Piso',
-  'Portas e janelas',
-];
-
-const EXTRA_SERVICES = [
-  'Limpeza pós-obra',
-  'Paisagismo',
-  'Instalação elétrica',
-  'Hidráulica',
-  'Pintura',
-  'Solveragem',
-  'Marmoraria',
-  'Vidraçaria',
-  'Serralheria',
-];
-
 interface Room {
   id: string;
   name: string;
   width: string;
   length: string;
   height: string;
-}
-
-function emptyFullBudget(): Budget {
-  const now = new Date().toISOString();
-  return {
-    id: generateId(),
-    clientId: null,
-    serviceType: 'Obra completa',
-    serviceCategory: 'Construção',
-    description: '',
-    projectName: '',
-    projectDescription: '',
-    siteAddress: '',
-    city: '',
-    measurements: {},
-    quantities: {},
-    options: {},
-    calculated: {},
-    estimatedDays: null,
-    daysCalculationMode: 'manual',
-    productivityPerDay: null,
-    teamDailyCost: null,
-    laborCost: null,
-    workerCost: null,
-    helperCost: null,
-    workerDailyRate: null,
-    helperDailyRate: null,
-    numberOfHelpers: null,
-    transportCost: 0,
-    foodCost: 0,
-    fuelCost: 0,
-    toolCost: 0,
-    otherCost: 0,
-    expenseCost: 0,
-    riskReservePercent: null,
-    riskReserve: 0,
-    materialCost: 0,
-    materialSellingPrice: 0,
-    totalCost: 0,
-    minimumMargin: null,
-    recommendedMargin: null,
-    fullMargin: null,
-    minimumPrice: null,
-    recommendedPrice: null,
-    fullPrice: null,
-    effectiveUnitPrice: null,
-    pricingVersion: '1.0.0',
-    selectedPriceType: null,
-    customPrice: null,
-    discount: 0,
-    finalPrice: null,
-    paymentMethod: '',
-    paymentTerms: [],
-    includedServices: [],
-    excludedServices: [],
-    agreedDays: null,
-    validityDays: 30,
-    expiresAt: null,
-    approvalStatus: 'pending',
-    approvedAt: null,
-    rejectedAt: null,
-    status: 'draft',
-    projectMode: 'full',
-    stages: [],
-    materials: [],
-    createdAt: now,
-    updatedAt: now,
-  };
 }
 
 export default function FullProjectPage() {
@@ -215,7 +124,7 @@ export default function FullProjectPage() {
     });
 
     const budget: Budget = {
-      ...emptyFullBudget(),
+      ...createEmptyBudget({ projectMode: 'full' }),
       projectName: name,
       serviceType: 'Obra completa',
       serviceCategory: 'Construção',
@@ -315,43 +224,39 @@ export default function FullProjectPage() {
               {rooms.map((room) => (
                 <div key={room.id} className="bg-slate-50 rounded-xl p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       placeholder="Nome (ex: Sala)"
                       value={room.name}
                       onChange={(e) => updateRoom(room.id, 'name', e.target.value)}
-                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
                     <button onClick={() => removeRoom(room.id)} className="p-2 text-red-400 hover:text-red-600">
                       <Trash2 size={16} />
                     </button>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <input
+                    <Input
                       placeholder="L (m)"
                       type="number"
                       min="0"
                       step="0.01"
                       value={room.width}
                       onChange={(e) => updateRoom(room.id, 'width', e.target.value)}
-                      className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
-                    <input
+                    <Input
                       placeholder="C (m)"
                       type="number"
                       min="0"
                       step="0.01"
                       value={room.length}
                       onChange={(e) => updateRoom(room.id, 'length', e.target.value)}
-                      className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
-                    <input
+                    <Input
                       placeholder="H (m)"
                       type="number"
                       min="0"
                       step="0.01"
                       value={room.height}
                       onChange={(e) => updateRoom(room.id, 'height', e.target.value)}
-                      className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                   {parseFloat(room.width) > 0 && parseFloat(room.length) > 0 && (

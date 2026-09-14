@@ -4,6 +4,7 @@ import { Save, FileText, Share2, User, CreditCard, Calendar } from 'lucide-react
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useClientStore } from '../../store/useClientStore';
 import { formatMoney } from '../../lib/money';
+import { generateProposalHtml } from '../../lib/proposal-template';
 import PageHeader from '../../components/layout/PageHeader';
 import PageLayout from '../../components/layout/PageLayout';
 import Card from '../../components/ui/Card';
@@ -11,16 +12,16 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import ClientPickerModal from '../../components/ui/ClientPickerModal';
-import type { Budget } from '../../lib/types';
+import type { Budget, PriceType, PaymentMethod, PaymentTerm } from '../../lib/types';
 
-const PRICE_TYPES = [
+const PRICE_TYPES: { value: PriceType; label: string }[] = [
   { value: 'minimum', label: 'Preço mínimo' },
   { value: 'recommended', label: 'Preço recomendado' },
   { value: 'full', label: 'Preço cheio' },
   { value: 'custom', label: 'Personalizado' },
 ];
 
-const PAYMENT_METHODS = [
+const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: '', label: 'Selecione...' },
   { value: 'a_vista', label: 'À vista' },
   { value: 'parcelado', label: 'Parcelado' },
@@ -28,7 +29,7 @@ const PAYMENT_METHODS = [
   { value: 'combinado', label: 'A combinar' },
 ];
 
-const PAYMENT_TERMS_OPTIONS = [
+const PAYMENT_TERMS_OPTIONS: { value: PaymentTerm; label: string }[] = [
   { value: 'sinal', label: 'Sinal de 30%' },
   { value: 'meio', label: '50% no meio' },
   { value: 'entrega', label: 'Pagamento na entrega' },
@@ -45,12 +46,12 @@ export default function ProposalPage() {
   const [budget, setBudget] = useState<Budget | null>(null);
   const [clientId, setClientId] = useState<string | null>(null);
   const [showClientPicker, setShowClientPicker] = useState(false);
-  const [selectedPriceType, setSelectedPriceType] = useState('recommended');
+  const [selectedPriceType, setSelectedPriceType] = useState<PriceType>('recommended');
   const [customPrice, setCustomPrice] = useState('');
   const [discount, setDiscount] = useState('0');
   const [finalPrice, setFinalPrice] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [paymentTerms, setPaymentTerms] = useState<string[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('');
+  const [paymentTerms, setPaymentTerms] = useState<PaymentTerm[]>([]);
   const [validityDays, setValidityDays] = useState('30');
   const [agreedDays, setAgreedDays] = useState('');
 
@@ -97,7 +98,7 @@ export default function ProposalPage() {
     setFinalPrice(discounted > 0 ? discounted : null);
   }, [budget, selectedPriceType, customPrice, discount]);
 
-  const togglePaymentTerm = useCallback((term: string) => {
+  const togglePaymentTerm = useCallback((term: PaymentTerm) => {
     setPaymentTerms((prev) =>
       prev.includes(term) ? prev.filter((t) => t !== term) : [...prev, term]
     );
@@ -131,123 +132,17 @@ export default function ProposalPage() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const clientSection = selectedClient
-      ? `<div class="field"><div class="field-label">Nome</div><div class="field-value">${selectedClient.name}</div></div>
-         ${selectedClient.phone ? `<div class="field"><div class="field-label">Telefone</div><div class="field-value">${selectedClient.phone}</div></div>` : ''}
-         ${selectedClient.address ? `<div class="field"><div class="field-label">Endereço</div><div class="field-value">${selectedClient.address}</div></div>` : ''}
-         ${selectedClient.city ? `<div class="field"><div class="field-label">Cidade</div><div class="field-value">${selectedClient.city}</div></div>` : ''}`
-      : '<div class="field"><div class="field-value" style="color:#94a3b8">Nenhum cliente vinculado</div></div>';
-
-    const paymentLabels: Record<string, string> = {
-      a_vista: 'À vista',
-      parcelado: 'Parcelado',
-      por_etapa: 'Por etapa de obra',
-      combinado: 'A combinar',
-    };
-
-    const termLabels: Record<string, string> = {
-      sinal: 'Sinal de 30%',
-      meio: '50% no meio',
-      entrega: 'Pagamento na entrega',
-      semanal: 'Semanal',
-      quinzenal: 'Quinzenal',
-      mensal: 'Mensal',
-    };
-
-    const paymentSection = paymentMethod
-      ? `<div class="section">
-           <div class="section-title">Pagamento</div>
-           <div class="field">
-             <div class="field-label">Forma de pagamento</div>
-             <div class="field-value">${paymentLabels[paymentMethod] || paymentMethod}</div>
-           </div>
-           ${paymentTerms.length > 0 ? `<div class="field"><div class="field-label">Condições</div><div class="field-value">${paymentTerms.map((t) => termLabels[t] || t).join(', ')}</div></div>` : ''}
-         </div>`
-      : '';
-
-    const validitySection = validityDate
-      ? `<div class="section">
-           <div class="section-title">Validade</div>
-           <div class="field">
-             <div class="field-label">Esta proposta é válida por ${validityDays} dias</div>
-             <div class="field-value">Até ${validityDate}</div>
-           </div>
-         </div>`
-      : '';
-
-    const daysSection = agreedDays
-      ? `<div class="section">
-           <div class="section-title">Prazo de execução</div>
-           <div class="field">
-             <div class="field-label">Prazo estimado</div>
-             <div class="field-value">${agreedDays} dia${Number(agreedDays) !== 1 ? 's' : ''}</div>
-           </div>
-         </div>`
-      : '';
-
-    const html = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Proposta - ${budget.projectName || budget.serviceType}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', sans-serif; color: #1e293b; padding: 40px; max-width: 700px; margin: 0 auto; }
-    h1 { font-size: 22px; margin-bottom: 4px; }
-    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; }
-    .section { margin-bottom: 20px; }
-    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; letter-spacing: 0.5px; }
-    .field { margin-bottom: 8px; }
-    .field-label { font-size: 12px; color: #64748b; }
-    .field-value { font-size: 15px; font-weight: 600; }
-    .price-box { background: #f0fdfa; border: 2px solid #14b8a6; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0; }
-    .price-label { font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .price-value { font-size: 32px; font-weight: 800; color: #0d9488; margin-top: 4px; }
-    .note { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 8px; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center; }
-    .divider { border-top: 1px solid #e2e8f0; margin: 16px 0; }
-    @media print { body { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <h1>Proposta Comercial</h1>
-  <p class="subtitle">OrçaObra — Orçamentos inteligentes</p>
-
-  <div class="section">
-    <div class="section-title">Cliente</div>
-    ${clientSection}
-  </div>
-
-  <div class="section">
-    <div class="section-title">Projeto</div>
-    <div class="field">
-      <div class="field-label">Nome</div>
-      <div class="field-value">${budget.projectName || budget.serviceType}</div>
-    </div>
-    <div class="field">
-      <div class="field-label">Descrição</div>
-      <div class="field-value">${budget.projectDescription || budget.description}</div>
-    </div>
-    ${budget.siteAddress ? `<div class="field"><div class="field-label">Endereço da obra</div><div class="field-value">${budget.siteAddress}${budget.city ? ' — ' + budget.city : ''}</div></div>` : ''}
-  </div>
-
-  ${daysSection}
-
-  <div class="price-box">
-    <div class="price-label">Valor proposto</div>
-    <div class="price-value">${formatMoney(finalPrice)}</div>
-    ${Number(discount) > 0 ? `<div class="note">Desconto de ${discount}% aplicado</div>` : ''}
-  </div>
-
-  ${paymentSection}
-  ${validitySection}
-
-  <div class="footer">
-    <p>Gerado por OrçaObra em ${new Date().toLocaleDateString('pt-BR')}</p>
-  </div>
-</body>
-</html>`;
+    const html = generateProposalHtml({
+      budget,
+      finalPrice,
+      discount: Number(discount) || 0,
+      selectedClient: selectedClient ?? null,
+      paymentMethod,
+      paymentTerms,
+      validityDays: Number(validityDays) || 30,
+      validityDate,
+      agreedDays: agreedDays ? Number(agreedDays) : null,
+    });
 
     printWindow.document.write(html);
     printWindow.document.close();
@@ -321,7 +216,7 @@ export default function ProposalPage() {
             <Select
               label="Forma de pagamento"
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
               options={PAYMENT_METHODS}
             />
             {paymentMethod && (
@@ -382,7 +277,7 @@ export default function ProposalPage() {
             <Select
               label="Tipo de preço"
               value={selectedPriceType}
-              onChange={(e) => setSelectedPriceType(e.target.value)}
+              onChange={(e) => setSelectedPriceType(e.target.value as PriceType)}
               options={PRICE_TYPES}
             />
 

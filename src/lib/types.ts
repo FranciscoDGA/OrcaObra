@@ -1,3 +1,17 @@
+export type BudgetStatus = 'draft' | 'Rascunho' | 'Enviado' | 'Aprovado' | 'Recusado' | 'Convertido em obra' | 'Expirado';
+export type ApprovalStatus = 'pending' | 'Pendente' | 'Aprovado';
+export type ProjectMode = 'simple' | 'full' | 'individual';
+export type DaysCalculationMode = 'manual' | 'productivity' | 'fixed';
+export type PriceType = 'minimum' | 'recommended' | 'full' | 'custom';
+
+export type ExecutionStatus = 'in_progress' | 'completed' | 'paused' | 'cancelled';
+export type StageStatus = 'pending' | 'in_progress' | 'completed' | 'paused';
+
+export type ConfidenceLevel = 'alta' | 'media' | 'baixa';
+
+export type PaymentMethod = '' | 'a_vista' | 'parcelado' | 'por_etapa' | 'combinado';
+export type PaymentTerm = 'sinal' | 'meio' | 'entrega' | 'semanal' | 'quinzenal' | 'mensal';
+
 export interface User {
   id: string;
   name: string;
@@ -66,7 +80,7 @@ export interface Budget {
   options: Record<string, string>;
   calculated: CalculatedGeometry;
   estimatedDays: number | null;
-  daysCalculationMode: string;
+  daysCalculationMode: DaysCalculationMode;
   productivityPerDay: number | null;
   teamDailyCost: number | null;
   laborCost: number | null;
@@ -94,22 +108,22 @@ export interface Budget {
   fullPrice: number | null;
   effectiveUnitPrice: number | null;
   pricingVersion: string;
-  selectedPriceType: string | null;
+  selectedPriceType: PriceType | null;
   customPrice: number | null;
   discount: number;
   finalPrice: number | null;
-  paymentMethod: string;
-  paymentTerms: string[];
+  paymentMethod: PaymentMethod;
+  paymentTerms: PaymentTerm[];
   includedServices: string[];
   excludedServices: string[];
   agreedDays: number | null;
   validityDays: number;
   expiresAt: string | null;
-  approvalStatus: string;
+  approvalStatus: ApprovalStatus;
   approvedAt: string | null;
   rejectedAt: string | null;
-  status: string;
-  projectMode: string;
+  status: BudgetStatus;
+  projectMode: ProjectMode;
   stages: Stage[];
   materials: ProjectMaterial[];
   createdAt: string;
@@ -162,14 +176,14 @@ export interface LogEntry {
 export interface ExecutionStage {
   id: string;
   name: string;
-  status: string;
+  status: StageStatus;
   progressPercent: number;
 }
 
 export interface Execution {
   id: string;
   projectId: string;
-  status: string;
+  status: ExecutionStatus;
   startDate: string;
   plannedEndDate: string | null;
   actualEndDate: string | null;
@@ -232,5 +246,5 @@ export interface ParseResult {
     area: number | null;
   };
   missingInformation: string[];
-  confidence: string;
+  confidence: ConfidenceLevel;
 }

@@ -2,9 +2,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
 import { servicesForCategory, findService } from '../../data/services';
-import { generateId } from '../../lib/id';
 import { useBudgetStore } from '../../store/useBudgetStore';
-import type { Budget } from '../../lib/types';
+import { createEmptyBudget } from '../../lib/budget-factory';
 
 export default function ServicePage() {
   const navigate = useNavigate();
@@ -17,71 +16,15 @@ export default function ServicePage() {
     const service = findService(serviceType);
     if (!service) return;
 
-    const now = new Date().toISOString();
-    const emptyBudget: Budget = {
-      id: generateId(),
-      clientId: null,
+    const emptyBudget = createEmptyBudget({
       serviceType: service.type,
       serviceCategory: service.category,
-      description: '',
-      projectName: '',
-      projectDescription: '',
-      siteAddress: '',
-      city: '',
-      measurements: {},
-      quantities: {},
-      options: {},
-      calculated: {},
-      estimatedDays: null,
-      daysCalculationMode: 'manual',
-      productivityPerDay: null,
-      teamDailyCost: null,
-      laborCost: null,
-      workerCost: null,
-      helperCost: null,
-      workerDailyRate: null,
-      helperDailyRate: null,
-      numberOfHelpers: null,
-      transportCost: 0,
-      foodCost: 0,
-      fuelCost: 0,
-      toolCost: 0,
-      otherCost: 0,
-      expenseCost: 0,
-      riskReservePercent: null,
-      riskReserve: 0,
-      materialCost: 0,
-      materialSellingPrice: 0,
-      totalCost: 0,
-      minimumMargin: null,
-      recommendedMargin: null,
-      fullMargin: null,
-      minimumPrice: null,
-      recommendedPrice: null,
-      fullPrice: null,
-      effectiveUnitPrice: null,
-      pricingVersion: '',
-      selectedPriceType: null,
-      customPrice: null,
-      discount: 0,
-      finalPrice: null,
-      paymentMethod: '',
-      paymentTerms: [],
-      includedServices: [],
-      excludedServices: [],
-      agreedDays: null,
-      validityDays: 15,
-      expiresAt: null,
-      approvalStatus: 'Pendente',
-      approvedAt: null,
-      rejectedAt: null,
-      status: 'Rascunho',
       projectMode: 'individual',
-      stages: [],
-      materials: [],
-      createdAt: now,
-      updatedAt: now,
-    };
+      validityDays: 15,
+      approvalStatus: 'Pendente',
+      status: 'Rascunho',
+      pricingVersion: '',
+    });
 
     const saved = addBudget(emptyBudget);
     navigate(`/budget/${saved.id}/step/1`);

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { parseNaturalDescription } from '../../lib/ai-parser';
 import { findService } from '../../data/services';
-import { generateId } from '../../lib/id';
+import { createEmptyBudget } from '../../lib/budget-factory';
 import { formatMoney } from '../../lib/money';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -16,7 +16,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
-import type { Budget, ParseResult } from '../../lib/types';
+import type { ParseResult } from '../../lib/types';
 
 const QUICK_ESTIMATES: Record<string, { min: number; max: number; perM2: number }> = {
   pintura: { min: 800, max: 5000, perM2: 25 },
@@ -64,27 +64,19 @@ export default function QuickBudgetPage() {
     if (!result) return;
 
     const service = findService(result.parsedData.serviceType);
-    const now = new Date().toISOString();
     const area = result.parsedData.area;
     const estimate = getEstimate(area, result.parsedData.serviceType);
 
-    const budget: Budget = {
-      id: generateId(),
-      clientId: null,
+    const budget = createEmptyBudget({
       serviceType: result.parsedData.serviceType,
       serviceCategory: service?.category ?? '',
       description: result.rawDescription,
-      projectName: '',
       projectDescription: result.rawDescription,
-      siteAddress: '',
-      city: '',
       measurements: {
         width: result.parsedData.measurements.width,
         length: result.parsedData.measurements.length,
         height: result.parsedData.measurements.height,
       },
-      quantities: {},
-      options: {},
       calculated: {
         floorArea: area,
         perimeter: null,
@@ -92,26 +84,11 @@ export default function QuickBudgetPage() {
         volume: null,
         linearMeters: null,
       },
-      estimatedDays: null,
       daysCalculationMode: 'fixed',
-      productivityPerDay: null,
-      teamDailyCost: null,
-      laborCost: null,
-      workerCost: null,
-      helperCost: null,
       workerDailyRate: settings.workerDailyRate,
       helperDailyRate: settings.helperDailyRate,
       numberOfHelpers: settings.defaultHelpers,
-      transportCost: 0,
-      foodCost: 0,
-      fuelCost: 0,
-      toolCost: 0,
-      otherCost: 0,
-      expenseCost: 0,
       riskReservePercent: settings.defaultRiskReservePercent,
-      riskReserve: 0,
-      materialCost: 0,
-      materialSellingPrice: 0,
       totalCost: estimate.suggested * 0.6,
       minimumMargin: settings.minimumMargin,
       recommendedMargin: settings.recommendedMargin,
@@ -122,26 +99,9 @@ export default function QuickBudgetPage() {
       effectiveUnitPrice: area ? estimate.suggested / area : null,
       pricingVersion: 'v1',
       selectedPriceType: 'recommended',
-      customPrice: null,
-      discount: 0,
       finalPrice: estimate.suggested,
-      paymentMethod: '',
-      paymentTerms: [],
-      includedServices: [],
-      excludedServices: [],
-      agreedDays: null,
-      validityDays: 30,
-      expiresAt: null,
-      approvalStatus: 'pending',
-      approvedAt: null,
-      rejectedAt: null,
-      status: 'draft',
       projectMode: 'simple',
-      stages: [],
-      materials: [],
-      createdAt: now,
-      updatedAt: now,
-    };
+    });
 
     const saved = addBudget(budget);
     navigate(`/budget/${saved.id}/result`);
