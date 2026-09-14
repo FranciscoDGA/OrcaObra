@@ -1,8 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import SplashScreen from './components/ui/SplashScreen';
 import { useSettingsStore } from './store/useSettingsStore';
+import { useAuthStore } from './store/useAuthStore';
+import { isSupabaseConfigured } from './lib/supabase';
 import PageLayout from './components/layout/PageLayout';
 import OnboardingPage from './features/onboarding/OnboardingPage';
 import DashboardPage from './features/dashboard/DashboardPage';
@@ -22,9 +24,22 @@ import SettingsPage from './features/settings/SettingsPage';
 import BudgetsListPage from './features/budget/BudgetsListPage';
 import FullProjectPage from './features/budget/FullProjectPage';
 import EditBudgetPage from './features/budget/EditBudgetPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading, initialized } = useAuthStore();
   const user = useSettingsStore((s) => s.user);
+
+  if (!initialized) return null;
+
+  if (isSupabaseConfigured()) {
+    if (loading) return null;
+    if (!session) return <Navigate to="/login" replace />;
+    if (!user?.name) return <OnboardingPage />;
+    return <PageLayout>{children}</PageLayout>;
+  }
+
   if (!user?.name) return <OnboardingPage />;
   return <PageLayout>{children}</PageLayout>;
 }
@@ -32,12 +47,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+  const initialize = useAuthStore((s) => s.initialize);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
 
   return (
     <ToastProvider>
       {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/cadastro" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/new" element={<ProtectedRoute><NewBudgetPage /></ProtectedRoute>} />
